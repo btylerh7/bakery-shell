@@ -2,13 +2,17 @@
 use std::io::{self, Write};
 
 enum Command { 
+    Exit(String)
 }
 
 fn main() {
     loop {
         print_string("$ ");
         let command = read_input();
-        let message = format!("{}: command not found", command.trim());
+        let message = match command.trim().to_string().as_str() { 
+            "exit" => break,
+            _ => format!("{}: command not found", command.trim())
+        };
         print_string(&message);
         print_string("\n");
 
