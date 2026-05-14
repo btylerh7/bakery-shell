@@ -5,13 +5,25 @@ enum Command {
 }
 
 fn main() {
-    // TODO: Uncomment the code below to pass the first stage
-    print!("$ ");
+    loop {
+        print_string("$ ");
+        let command = read_input();
+        let message = format!("{}: command not found", command.trim());
+        print_string(&message);
+        print_string("\n");
+
+    }
+    
+}
+
+fn print_string(text: &str) {
+    print!("{}", text);
     io::stdout().flush().unwrap();
+}
+fn read_input() -> String {
     let mut command = String::new();
     io::stdin().read_line(&mut command).unwrap();
-    println!("{}: command not found", command.trim());
-    io::stdout().flush().unwrap();
+    command
 }
 
 
