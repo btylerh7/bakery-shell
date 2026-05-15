@@ -1,31 +1,30 @@
-use std::{env, fs::DirEntry, io::Error, path::PathBuf};
+use std::{env, path::PathBuf};
 #[allow(unused_imports)]
 use std::io::{self, Write};
+use std::process::Command;
 
 enum CommandError {
     NotFound
 }
-enum Command { 
+enum ShellCommand { 
     Exit,
     Echo,
     Type,
-    NotFound(String)
 }
-impl Command {
+impl ShellCommand {
     fn to_str(&self) -> &str {
         match self {
-            Command::Exit => "exit",
-            Command::Echo => "echo",
-            Command::Type => "type",
-            Command::NotFound(string) => string
+            ShellCommand::Exit => "exit",
+            ShellCommand::Echo => "echo",
+            ShellCommand::Type => "type",
         }
     }
-    fn from_str(check: &str) -> Self {
+    fn from_str(check: &str) -> Result<Self, CommandError> {
         match check.trim() {
-            "exit" => Command::Exit,
-            "echo" => Command::Echo,
-            "type" => Command::Type,
-            _ => Command::NotFound(check.to_string())
+            "exit" => Ok(ShellCommand::Exit),
+            "echo" => Ok(ShellCommand::Echo),
+            "type" => Ok(ShellCommand::Type),
+            _ => Err(CommandError::NotFound)
         }
     }
     fn handle_echo(input: &str) {
@@ -35,21 +34,29 @@ impl Command {
     fn handle_exit() {
         std::process::exit(0)
     }
-    fn handle_type(command: &str) {
-        let result = match command.trim() {
-            "exit" => format!("{} is a shell builtin", &command),
-            "type" => format!("{} is a shell builtin", &command),
-            "echo" => format!("{} is a shell builtin", &command),
-            _ => {
-                let in_path = check_in_path(&command);
+    fn handle_type(command: &str, paths: &Vec<PathBuf>) {
+        let result = match ShellCommand::from_str(command.trim()) {
+            Ok(_) => format!("{} is a shell builtin", command),
+            Err(_) => {
+                let in_path = check_in_path(&command, paths);
                 match in_path {
                     Some(exec_path) => format!("{} is {}", command, exec_path),
                     None => format!("{}: not found", command)
                 }
-            }
+
+            },
+
         };
         print_string(&result);
         print_string("\r\n");
+    }
+    fn handle_process(command: &str, args: Vec<&str>) {
+        Command::new(command)
+            .args(args)
+            .spawn()
+            .unwrap();
+        print_string("\r\n");
+
     }
     fn handle_not_found(command: &str) {
         let message = format!("{}: command not found", command.trim());
@@ -60,16 +67,29 @@ impl Command {
 }
 
 fn main() {
+    // Load path environment variable 
+    let mut paths: Vec<PathBuf> = vec![];
+    if let Some(path_list) = std::env::var_os("PATH") {
+        paths = env::split_paths(&path_list).collect();
+    }
+
+    // Eval loop
     loop {
         print_string("$ ");
         let input = read_input();
         let args: Vec<&str> = input.split(" ").collect();
-        let command = Command::from_str(&args[0]);
+        let command = ShellCommand::from_str(&args[0]);
         match command {
-            Command::Exit => Command::handle_exit(),
-            Command::Echo => Command::handle_echo(args[1..].join(" ").trim()),
-            Command::Type => Command::handle_type(&args[1].trim()),
-            Command::NotFound(cmd) => Command::handle_not_found(&cmd)
+            Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
+            Ok(ShellCommand::Echo) => ShellCommand::handle_echo(args[1..].join(" ").trim()),
+            Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), &paths),
+            _ => {
+                if let Some(execute_path) = check_in_path(&args[0].trim(), &paths) {
+                    ShellCommand::handle_process(&execute_path, args[1..].to_vec())
+                } else {
+                    ShellCommand::handle_not_found(&args[0].trim())
+                }
+            }
         };
 
     }
@@ -86,16 +106,14 @@ fn read_input() -> String {
     command
 }
 
-fn check_in_path(command: &str) -> Option<String> {
-    if let Some(path_list) = std::env::var_os("PATH") {
-        let paths: Vec<PathBuf> = env::split_paths(&path_list).collect();
-        for p in paths {
-            let command_check = p.join(command);
-            if command_check.exists() && is_executable(&command_check) {
-                return Some(command_check.into_os_string().into_string().unwrap());
-            }
-            continue
+fn check_in_path(command: &str, paths: &Vec<PathBuf>) -> Option<String> {
+    let paths_cloned = paths.clone();
+    for p in paths_cloned {
+        let command_check = p.join(command);
+        if command_check.exists() && is_executable(&command_check) {
+            return Some(command_check.into_os_string().into_string().unwrap());
         }
+        continue
     }
     None
 }
