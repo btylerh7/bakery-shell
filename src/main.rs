@@ -38,7 +38,7 @@ fn main() {
         let message = match command {
             Command::Exit => return,
             Command::Echo => format!("{}", args[1..].join(" ").trim()),
-            Command::Type => format!("Command was type"),
+            Command::Type => format!("{}", get_type(&args[1].trim())),
             _ => format!("{}: command not found", command.to_str().trim())
         };
         print_string(&message);
@@ -58,8 +58,14 @@ fn read_input() -> String {
     command
 }
 
-fn get_type(command_name: &str) -> {
-
+fn get_type(command: &str) -> String {
+    let result = match command.trim() {
+        "exit" => format!("{} is a shell builtin", &command),
+        "type" => format!("{} is a shell builtin", &command),
+        "echo" => format!("{} is a shell builtin", &command),
+        _ => format!("{}: not found", command)
+    };
+    result
 }
 
 
