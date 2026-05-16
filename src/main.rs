@@ -12,6 +12,7 @@ enum ShellCommand {
     Echo,
     Type,
     Pwd,
+    Cd,
 }
 impl ShellCommand {
     // fn to_str(&self) -> &str {
@@ -27,6 +28,7 @@ impl ShellCommand {
             "echo" => Ok(ShellCommand::Echo),
             "type" => Ok(ShellCommand::Type),
             "pwd" => Ok(ShellCommand::Pwd),
+            "cd" => Ok(ShellCommand::Cd),
             _ => Err(CommandError::NotFound),
         }
     }
@@ -69,6 +71,17 @@ impl ShellCommand {
         print_string(&message);
         print_string("\r\n");
     }
+    fn handle_cd(directory: &str) {
+        let check_path = std::path::Path::new(&directory);
+        if check_path.exists() {
+            if let Err(error) = std::env::set_current_dir(check_path) {
+                println!("Error changing directory to {:?}, {:?}", check_path, error)
+            }
+        } else {
+            let message = format!("cd: {:?}: No such file or directory \r\n", directory);
+            print_string(&message);
+        }
+    }
 }
 
 fn main() {
@@ -89,6 +102,7 @@ fn main() {
             Ok(ShellCommand::Echo) => ShellCommand::handle_echo(args[1..].join(" ").trim()),
             Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), &paths),
             Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
+            Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&args[1].trim()),
             _ => {
                 if let Some(execute_path) = check_in_path(&args[0].trim(), &paths) {
                     ShellCommand::handle_process(&execute_path, args.to_vec())
