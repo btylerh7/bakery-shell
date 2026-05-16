@@ -1,12 +1,12 @@
-use std::{env, path::PathBuf};
 #[allow(unused_imports)]
 use std::io::{self, Write};
 use std::process::Command;
+use std::{env, path::PathBuf};
 
 enum CommandError {
-    NotFound
+    NotFound,
 }
-enum ShellCommand { 
+enum ShellCommand {
     Exit,
     Echo,
     Type,
@@ -24,7 +24,7 @@ impl ShellCommand {
             "exit" => Ok(ShellCommand::Exit),
             "echo" => Ok(ShellCommand::Echo),
             "type" => Ok(ShellCommand::Type),
-            _ => Err(CommandError::NotFound)
+            _ => Err(CommandError::NotFound),
         }
     }
     fn handle_echo(input: &str) {
@@ -41,33 +41,29 @@ impl ShellCommand {
                 let in_path = check_in_path(&command, paths);
                 match in_path {
                     Some(exec_path) => format!("{} is {}", command, exec_path),
-                    None => format!("{}: not found", command)
+                    None => format!("{}: not found", command),
                 }
-
-            },
-
+            }
         };
         print_string(&result);
         print_string("\r\n");
     }
     fn handle_process(command: &str, args: Vec<&str>) {
         Command::new(command)
-            .args(args)
+            .args(args.iter().map(|arg| return arg.trim()))
             .spawn()
             .unwrap();
         print_string("\r\n");
-
     }
     fn handle_not_found(command: &str) {
         let message = format!("{}: command not found", command.trim());
         print_string(&message);
         print_string("\r\n");
     }
-
 }
 
 fn main() {
-    // Load path environment variable 
+    // Load path environment variable
     let mut paths: Vec<PathBuf> = vec![];
     if let Some(path_list) = std::env::var_os("PATH") {
         paths = env::split_paths(&path_list).collect();
@@ -91,9 +87,7 @@ fn main() {
                 }
             }
         };
-
     }
-    
 }
 
 fn print_string(text: &str) {
@@ -113,7 +107,7 @@ fn check_in_path(command: &str, paths: &Vec<PathBuf>) -> Option<String> {
         if command_check.exists() && is_executable(&command_check) {
             return Some(command_check.into_os_string().into_string().unwrap());
         }
-        continue
+        continue;
     }
     None
 }
@@ -124,7 +118,7 @@ fn is_executable(file: &PathBuf) -> bool {
         use std::os::unix::fs::PermissionsExt;
 
         let permissions = metadata.permissions();
-        return permissions.mode() & 0o111 != 0
+        return permissions.mode() & 0o111 != 0;
     }
     false
 }
@@ -135,10 +129,7 @@ fn is_executable(file: &PathBuf) -> bool {
         use std::os::windows::fs::PermissionsExt;
 
         let permissions = metadata.permissions();
-        return permissions.mode() & 0x21 != 0
+        return permissions.mode() & 0x21 != 0;
     }
     false
 }
-
-
-
