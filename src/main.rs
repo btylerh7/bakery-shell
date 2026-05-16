@@ -72,14 +72,22 @@ impl ShellCommand {
         print_string("\r\n");
     }
     fn handle_cd(directory: &str) {
-        let check_path = std::path::Path::new(&directory);
-        if check_path.exists() {
-            if let Err(error) = std::env::set_current_dir(check_path) {
-                println!("Error changing directory to {:?}, {:?}", check_path, error)
+        if directory == "~" {
+            if let Some(home_dir) = env::home_dir() {
+                if let Err(error) = std::env::set_current_dir(home_dir) {
+                    println!("Error changing directory to {:?}, {:?}", directory, error)
+                }
             }
         } else {
-            let message = format!("cd: {}: No such file or directory \r\n", directory);
-            print_string(&message);
+            let check_path = std::path::Path::new(&directory);
+            if check_path.exists() {
+                if let Err(error) = std::env::set_current_dir(check_path) {
+                    println!("Error changing directory to {:?}, {:?}", check_path, error)
+                }
+            } else {
+                let message = format!("cd: {}: No such file or directory \r\n", directory);
+                print_string(&message);
+            }
         }
     }
 }
