@@ -78,7 +78,7 @@ impl ShellCommand {
                 println!("Error changing directory to {:?}, {:?}", check_path, error)
             }
         } else {
-            let message = format!("cd: {:?}: No such file or directory \r\n", directory);
+            let message = format!("cd: {}: No such file or directory \r\n", directory);
             print_string(&message);
         }
     }
