@@ -1,5 +1,6 @@
 #[allow(unused_imports)]
 use std::io::{self, Write};
+use std::os::unix::process::CommandExt;
 use std::process::Command;
 use std::{env, path::PathBuf};
 
@@ -49,11 +50,13 @@ impl ShellCommand {
         print_string("\r\n");
     }
     fn handle_process(command: &str, args: Vec<&str>) {
+        let number_arguments = args.len();
+        let arg0 = args[0];
         Command::new(command)
-            .args(args.iter().map(|arg| return arg.trim()))
-            .spawn()
+            .arg0(arg0)
+            .args(args[1..].iter().map(|arg| return arg.trim()))
+            .status()
             .unwrap();
-        print_string("\r\n");
     }
     fn handle_not_found(command: &str) {
         let message = format!("{}: command not found", command.trim());
@@ -81,7 +84,7 @@ fn main() {
             Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), &paths),
             _ => {
                 if let Some(execute_path) = check_in_path(&args[0].trim(), &paths) {
-                    ShellCommand::handle_process(&execute_path, args[1..].to_vec())
+                    ShellCommand::handle_process(&execute_path, args.to_vec())
                 } else {
                     ShellCommand::handle_not_found(&args[0].trim())
                 }
