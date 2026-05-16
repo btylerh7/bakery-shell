@@ -11,20 +11,22 @@ enum ShellCommand {
     Exit,
     Echo,
     Type,
+    Pwd,
 }
 impl ShellCommand {
-    fn to_str(&self) -> &str {
-        match self {
-            ShellCommand::Exit => "exit",
-            ShellCommand::Echo => "echo",
-            ShellCommand::Type => "type",
-        }
-    }
+    // fn to_str(&self) -> &str {
+    //     match self {
+    //         ShellCommand::Exit => "exit",
+    //         ShellCommand::Echo => "echo",
+    //         ShellCommand::Type => "type",
+    //     }
+    // }
     fn from_str(check: &str) -> Result<Self, CommandError> {
         match check.trim() {
             "exit" => Ok(ShellCommand::Exit),
             "echo" => Ok(ShellCommand::Echo),
             "type" => Ok(ShellCommand::Type),
+            "pwd" => Ok(ShellCommand::Pwd),
             _ => Err(CommandError::NotFound),
         }
     }
@@ -34,6 +36,11 @@ impl ShellCommand {
     }
     fn handle_exit() {
         std::process::exit(0)
+    }
+    fn handle_pwd() {
+        let current_directory = std::env::current_dir().unwrap();
+        print_string(current_directory.into_os_string().to_str().unwrap());
+        print_string("\r\n");
     }
     fn handle_type(command: &str, paths: &Vec<PathBuf>) {
         let result = match ShellCommand::from_str(command.trim()) {
@@ -50,7 +57,6 @@ impl ShellCommand {
         print_string("\r\n");
     }
     fn handle_process(command: &str, args: Vec<&str>) {
-        let number_arguments = args.len();
         let arg0 = args[0];
         Command::new(command)
             .arg0(arg0)
@@ -82,6 +88,7 @@ fn main() {
             Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
             Ok(ShellCommand::Echo) => ShellCommand::handle_echo(args[1..].join(" ").trim()),
             Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), &paths),
+            Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
             _ => {
                 if let Some(execute_path) = check_in_path(&args[0].trim(), &paths) {
                     ShellCommand::handle_process(&execute_path, args.to_vec())
@@ -126,13 +133,13 @@ fn is_executable(file: &PathBuf) -> bool {
     false
 }
 
-#[cfg(windows)]
-fn is_executable(file: &PathBuf) -> bool {
-    if let Ok(metadata) = file.as_path().metadata() {
-        use std::os::windows::fs::PermissionsExt;
-
-        let permissions = metadata.permissions();
-        return permissions.mode() & 0x21 != 0;
-    }
-    false
-}
+// #[cfg(windows)]
+// fn is_executable(file: &PathBuf) -> bool {
+//     if let Ok(metadata) = file.as_path().metadata() {
+//         use std::os::windows::fs::PermissionsExt;
+//
+//         let permissions = metadata.permissions();
+//         return permissions.mode() & 0x21 != 0;
+//     }
+//     false
+// }
