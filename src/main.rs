@@ -1,4 +1,5 @@
 #[allow(unused_imports)]
+mod parser;
 use std::io::{self, Write};
 use std::os::unix::process::CommandExt;
 use std::process::Command;
@@ -58,8 +59,8 @@ impl ShellCommand {
         print_string(&result);
         print_string("\r\n");
     }
-    fn handle_process(command: &str, args: Vec<&str>) {
-        let arg0 = args[0];
+    fn handle_process(command: &str, args: Vec<String>) {
+        let arg0 = &args[0];
         Command::new(command)
             .arg0(arg0)
             .args(args[1..].iter().map(|arg| return arg.trim()))
@@ -72,22 +73,22 @@ impl ShellCommand {
         print_string("\r\n");
     }
     fn handle_cd(directory: &str) {
-        if directory == "~" {
-            if let Some(home_dir) = env::home_dir() {
-                if let Err(error) = std::env::set_current_dir(home_dir) {
-                    println!("Error changing directory to {:?}, {:?}", directory, error)
-                }
+        let mut new_dir = directory.to_owned();
+        if new_dir.starts_with("~") {
+            if let Some(home_dir) = std::env::var_os("HOME")
+                && let Ok(home_dir_string) = home_dir.to_os_string().into_string()
+            {
+                new_dir = new_dir.replace("~", &home_dir_string);
+            }
+        }
+        let check_path = std::path::Path::new(&directory);
+        if check_path.exists() {
+            if let Err(error) = std::env::set_current_dir(check_path) {
+                println!("Error changing directory to {:?}, {:?}", check_path, error)
             }
         } else {
-            let check_path = std::path::Path::new(&directory);
-            if check_path.exists() {
-                if let Err(error) = std::env::set_current_dir(check_path) {
-                    println!("Error changing directory to {:?}, {:?}", check_path, error)
-                }
-            } else {
-                let message = format!("cd: {}: No such file or directory \r\n", directory);
-                print_string(&message);
-            }
+            let message = format!("cd: {}: No such file or directory \r\n", directory);
+            print_string(&message);
         }
     }
 }
@@ -103,7 +104,7 @@ fn main() {
     loop {
         print_string("$ ");
         let input = read_input();
-        let args: Vec<&str> = input.split(" ").collect();
+        let args = parser::parse_arg_string(&input);
         let command = ShellCommand::from_str(&args[0]);
         match command {
             Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
@@ -113,7 +114,7 @@ fn main() {
             Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&args[1].trim()),
             _ => {
                 if let Some(execute_path) = check_in_path(&args[0].trim(), &paths) {
-                    ShellCommand::handle_process(&execute_path, args.to_vec())
+                    ShellCommand::handle_process(&execute_path, args)
                 } else {
                     ShellCommand::handle_not_found(&args[0].trim())
                 }
