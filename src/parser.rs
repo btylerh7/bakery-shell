@@ -2,6 +2,10 @@ enum ParserState {
     SingleQuote,
     NoQuote,
 }
+struct Arg {
+    value: String;
+    isSingleQuote: bool;
+}
 
 pub fn parse_arg_string(input: &str) -> Vec<String> {
     let mut current_state = ParserState::NoQuote;
