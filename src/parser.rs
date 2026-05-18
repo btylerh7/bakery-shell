@@ -2,28 +2,30 @@ enum ParserState {
     SingleQuote,
     NoQuote,
 }
-struct Arg {
-    value: String;
-    isSingleQuote: bool;
-}
 
 pub fn parse_arg_string(input: &str) -> Vec<String> {
     let mut current_state = ParserState::NoQuote;
     let mut current_arg = String::new();
+    let mut previous_char: Option<char> = None;
     let mut result: Vec<String> = vec![];
+
 
     for thing in input.chars() {
         match thing {
             '\'' => match current_state {
                 ParserState::NoQuote => {
-                    result.push(current_arg.clone());
-                    current_arg = String::new();
-                    current_state = ParserState::SingleQuote;
+                    if let Some(prev) = previous_char {
+                        if prev != '\'' {
+                            result.push(current_arg.clone());
+                            current_arg = String::new();
+                        }
+                        current_state = ParserState::SingleQuote;
+                    }
                 }
                 ParserState::SingleQuote => {
                     result.push(current_arg.clone());
-                    current_arg = String::new();
                     current_state = ParserState::NoQuote;
+                    current_arg = String::new();
                 }
             },
             thing if thing.is_whitespace() => match current_state {
@@ -35,6 +37,7 @@ pub fn parse_arg_string(input: &str) -> Vec<String> {
             },
             _ => current_arg.push(thing),
         }
+        previous_char = Some(thing.clone());
     }
 
     result
