@@ -81,13 +81,13 @@ impl ShellCommand {
                 new_dir = new_dir.replace("~", &home_dir_string);
             }
         }
-        let check_path = std::path::Path::new(&directory);
+        let check_path = std::path::Path::new(&new_dir);
         if check_path.exists() {
             if let Err(error) = std::env::set_current_dir(check_path) {
                 println!("Error changing directory to {:?}, {:?}", check_path, error)
             }
         } else {
-            let message = format!("cd: {}: No such file or directory \r\n", directory);
+            let message = format!("cd: {}: No such file or directory \r\n", new_dir);
             print_string(&message);
         }
     }
