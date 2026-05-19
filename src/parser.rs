@@ -11,7 +11,7 @@ struct Arg {
     state: ParserState
 }
 impl Arg {
-    fn new() -> Self {
+   pub fn new() -> Self {
         return Arg {
             value: String::new(),
             state: ParserState::NoQuote
@@ -54,6 +54,12 @@ pub fn parse_arg_string(input: &str) -> Vec<String> {
                 }
             },
             _ => {
+                if let Some(prev) = previous_char && prev == '\'' {
+                    if let Some(prev) = args.last() && prev.state == ParserState::SingleQuote {
+                        let prev_arg = args.pop().unwrap();
+                        current_arg.value = prev_arg.value; current_arg.state = ParserState::NoQuote;
+                    }
+                }
                 current_arg.value.push(thing);
             }
         }
@@ -75,3 +81,80 @@ pub fn parse_arg_string(input: &str) -> Vec<String> {
 
 }
 
+
+
+pub struct Parser {
+    current_arg: String,
+    args: Vec<String>,
+    previous_char: Option<char>,
+    current_state: ParserState
+}
+impl Parser {
+    pub fn new() -> Self {
+        return Parser {
+            current_arg: String::new(),
+            args: vec![],
+            previous_char: None,
+            current_state: ParserState::NoQuote
+
+        }
+    }
+   pub fn parse_arg_string(&mut self, input: &str) -> Vec<String> {
+        let trimmed = input.trim();
+        for char in trimmed.chars() {
+            match char {
+                '\'' => self.parse_single_quote(),
+                char if char.is_whitespace() => self.parse_whitespace(&char),
+                char => self.parse_normal_char(&char)
+            }
+        }
+        self.args.clone()
+    }
+    fn add_current_arg(&mut self) {
+        if !self.current_arg.is_empty() {
+            self.args.push(self.current_arg.clone());
+            self.current_arg = String::new();
+        }
+    }
+    fn parse_whitespace(&mut self, current: &char) {
+        match self.current_state {
+            ParserState::NoQuote => {
+                self.add_current_arg();
+                self.current_state = ParserState::NoQuote;
+            },
+            ParserState::SingleQuote => {
+                self.current_arg.push(current.clone());
+            }
+        }
+
+    }
+    fn parse_normal_char(&mut self, char: &char) {
+        self.current_arg.push(char.clone());
+    }
+    fn parse_single_quote(&mut self) {
+        if let Some(prev) = self.previous_char {
+            match self.current_state {
+                // echo banana'orange' -> bananaorange
+                // echo 'banana''orange' -> bananaorange
+                ParserState::NoQuote => {
+                    if vec!['\"', '\''].contains(&prev) {
+                        self.current_arg = self.args.pop().unwrap_or(String::new());
+                    } 
+                    // Start new quote or concatenate current args
+                    // ex. current 'current'
+                    // or current'current'
+                    self.current_state = ParserState::SingleQuote;
+                },
+                ParserState::SingleQuote => {
+                    // Quote is end quote
+                    self.args.push(self.current_arg.clone());
+                    self.current_arg = String::new();
+                    self.current_state = ParserState::NoQuote;
+                }
+            }
+        } else {
+            self.current_arg = String::new();
+            self.current_state = ParserState::SingleQuote;
+        }
+    }
+}
