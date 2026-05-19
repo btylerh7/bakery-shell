@@ -24,7 +24,6 @@ pub fn parse_arg_string(input: &str) -> Vec<String> {
     let mut args: Vec<Arg> = vec![];
     let mut previous_char: Option<char> = None;
     let trimmed_input = input.trim();
-    println!("Input to parser was {}", input.trim());
 
     for thing in trimmed_input.chars() {
         match thing {
