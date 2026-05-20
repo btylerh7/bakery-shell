@@ -104,7 +104,8 @@ fn main() {
     loop {
         print_string("$ ");
         let input = read_input();
-        let args = parser::parse_arg_string(&input);
+        let mut arg_parser = parser::Parser::new();
+        let args = arg_parser.parse_arg_string(&input);
         let command = ShellCommand::from_str(&args[0]);
         match command {
             Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
