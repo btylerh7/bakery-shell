@@ -43,6 +43,8 @@ impl Parser {
             ParserState::DoubleQuote => {
                 if let Some(prev) = self.previous_char.value && prev == '\\' && ['\"', '\\', '$', '`', '\n'].contains(current_char) {
                     self.current_char.is_escaped = true
+                } else {
+                    self.current_char.is_escaped = false
                 }
 
             }
@@ -163,7 +165,7 @@ impl Parser {
             }
         } else {
             self.current_arg = String::new();
-            self.current_state = ParserState::SingleQuote;
+            self.current_state = ParserState::DoubleQuote;
         }
 
     }
