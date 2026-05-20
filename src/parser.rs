@@ -67,7 +67,7 @@ impl Parser {
         self.current_arg = self.args.pop().unwrap_or(String::new());
     }
     fn parse_escape_char(&mut self) {
-        if self.current_char.is_escaped {
+        if self.current_char.is_escaped || self.current_state == ParserState::SingleQuote {
             self.current_arg.push('\\');
         }
     }
