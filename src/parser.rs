@@ -41,7 +41,7 @@ impl Parser {
                 self.current_char.is_escaped = false;
             },
             ParserState::DoubleQuote => {
-                if ['\"', '\\', '$', '`'].contains(current_char) {
+                if let Some(prev) = self.previous_char.value && prev == '\\' && ['\"', '\\', '$', '`', '\n'].contains(current_char) {
                     self.current_char.is_escaped = true
                 }
 
