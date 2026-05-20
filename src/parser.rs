@@ -5,42 +5,52 @@ enum ParserState {
     DoubleQuote
 }
 
-struct CharState {
+#[derive(Clone, Debug, PartialEq)]
+struct ParserChar {
     is_escaped: bool,
+    value: Option<char>
 }
 
 pub struct Parser {
     current_arg: String,
     args: Vec<String>,
-    previous_char: Option<char>,
+    previous_char: ParserChar,
+    current_char: ParserChar,
     current_state: ParserState,
-    current_char_state: CharState
 }
 impl Parser {
     pub fn new() -> Self {
         return Parser {
             current_arg: String::new(),
             args: vec![],
-            previous_char: None,
+            previous_char: ParserChar {is_escaped: false, value: None},
+            current_char: ParserChar {is_escaped: false, value: None},
             current_state: ParserState::NoQuote,
-            current_char_state: CharState {is_escaped: false}
         };
+    }
+    pub fn set_up_current_char(&mut self, current_char: &char) {
+        if let Some(prev) = self.previous_char.value {
+            self.current_char.is_escaped = prev == '\\' && !self.previous_char.is_escaped;
+        } else {
+            self.current_char.is_escaped = false;
+        }
+        self.current_char.value = Some(current_char.clone());
     }
     pub fn parse_arg_string(&mut self, input: &str) -> Vec<String> {
         let trimmed = input.trim();
         for char in trimmed.chars() {
+            self.set_up_current_char(&char);
             match char {
-                '\\' => self.parse_escape_char(),
-                char if self.current_char_state.is_escaped == true => {
+                char if self.current_char.is_escaped => {
                     self.current_arg.push(char.clone());
-                    self.current_char_state.is_escaped = false
                 },
+                '\\' => self.parse_escape_char(),
                 '\'' => self.parse_single_quote(),
                 '\"' => self.parse_double_quote(),
                 char if char.is_whitespace() => self.parse_whitespace(&char),
                 char => self.parse_normal_char(&char),
             }
-            self.previous_char = Some(char.clone());
+            self.previous_char = self.current_char.clone();
         }
         self.add_current_arg(); // Add the last arg after looping
         self.args.clone()
@@ -57,11 +67,8 @@ impl Parser {
         self.current_arg = self.args.pop().unwrap_or(String::new());
     }
     fn parse_escape_char(&mut self) {
-        if let Some(prev) = self.previous_char && prev == '\\' {
-            self.current_char_state.is_escaped = false;
+        if self.current_char.is_escaped {
             self.current_arg.push('\\');
-        } else {
-            self.current_char_state.is_escaped = true
         }
     }
     fn parse_whitespace(&mut self, current: &char) {
@@ -76,10 +83,10 @@ impl Parser {
         }
     }
     fn parse_normal_char(&mut self, char: &char) {
-        if let Some(prev) = self.previous_char {
+        if let Some(prev) = self.previous_char.value {
             match self.current_state {
                 ParserState::NoQuote => {
-                    if ['\'', '\"'].contains(&prev) {
+                    if ['\'', '\"'].contains(&prev) && !self.previous_char.is_escaped {
                         self.concat_arg();
                     }
                 },
@@ -89,7 +96,7 @@ impl Parser {
         self.current_arg.push(char.clone());
     }
     fn parse_single_quote(&mut self) {
-        if let Some(prev) = self.previous_char {
+        if let Some(prev) = self.previous_char.value {
             match self.current_state {
                 // echo banana'orange' -> bananaorange
                 // echo 'banana''orange' -> bananaorange
@@ -118,7 +125,7 @@ impl Parser {
         }
     }
     fn parse_double_quote(&mut self) {
-        if let Some(prev) = self.previous_char {
+        if let Some(prev) = self.previous_char.value {
             match self.current_state {
                 // echo banana'orange' -> bananaorange
                 // echo 'banana''orange' -> bananaorange

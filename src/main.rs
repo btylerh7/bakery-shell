@@ -109,7 +109,7 @@ fn main() {
         let command = ShellCommand::from_str(&args[0]);
         match command {
             Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
-            Ok(ShellCommand::Echo) => ShellCommand::handle_echo(args[1..].join(" ").trim()),
+            Ok(ShellCommand::Echo) => ShellCommand::handle_echo(&args[1..].join(" ")),
             Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), &paths),
             Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
             Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&args[1].trim()),
