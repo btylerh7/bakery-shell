@@ -5,11 +5,16 @@ enum ParserState {
     DoubleQuote
 }
 
+struct CharState {
+    is_escaped: bool,
+}
+
 pub struct Parser {
     current_arg: String,
     args: Vec<String>,
     previous_char: Option<char>,
     current_state: ParserState,
+    current_char_state: CharState
 }
 impl Parser {
     pub fn new() -> Self {
@@ -18,12 +23,18 @@ impl Parser {
             args: vec![],
             previous_char: None,
             current_state: ParserState::NoQuote,
+            current_char_state: CharState {is_escaped: false}
         };
     }
     pub fn parse_arg_string(&mut self, input: &str) -> Vec<String> {
         let trimmed = input.trim();
         for char in trimmed.chars() {
             match char {
+                '\\' => self.parse_escape_char(),
+                char if self.current_char_state.is_escaped == true => {
+                    self.current_arg.push(char.clone());
+                    self.current_char_state.is_escaped = false
+                },
                 '\'' => self.parse_single_quote(),
                 '\"' => self.parse_double_quote(),
                 char if char.is_whitespace() => self.parse_whitespace(&char),
@@ -44,6 +55,14 @@ impl Parser {
     /// 'test' has already been parsed but it needs to be concatenaded to test2.
     fn concat_arg(&mut self) {
         self.current_arg = self.args.pop().unwrap_or(String::new());
+    }
+    fn parse_escape_char(&mut self) {
+        if let Some(prev) = self.previous_char && prev == '\\' {
+            self.current_char_state.is_escaped = false;
+            self.current_arg.push('\\');
+        } else {
+            self.current_char_state.is_escaped = true
+        }
     }
     fn parse_whitespace(&mut self, current: &char) {
         match self.current_state {

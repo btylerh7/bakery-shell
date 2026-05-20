@@ -32,8 +32,8 @@ to use as much of the standard library as possible.
 
 ### Quoting
 
-- [ ] Handle single quotes
-- [ ] Handle double quotes
+- [x] Handle single quotes
+- [x] Handle double quotes
 - [ ] Backslash outside quotes
 - [ ] Backslash within single quotes
 - [ ] Backslash within double quotes
