@@ -35,9 +35,9 @@ to use as much of the standard library as possible.
 - [x] Handle single quotes
 - [x] Handle double quotes
 - [x] Backslash outside quotes
-- [ ] Backslash within single quotes
-- [ ] Backslash within double quotes
-- [ ] Executing a quoted executable
+- [x] Backslash within single quotes
+- [x] Backslash within double quotes
+- [x] Executing a quoted executable
 
 ### Redirection
 
