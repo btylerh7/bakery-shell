@@ -29,10 +29,20 @@ impl Parser {
         };
     }
     pub fn set_up_current_char(&mut self, current_char: &char) {
-        if let Some(prev) = self.previous_char.value {
-            self.current_char.is_escaped = prev == '\\' && !self.previous_char.is_escaped;
-        } else {
-            self.current_char.is_escaped = false;
+        match self.current_state {
+            ParserState::NoQuote => {
+                if let Some(prev) = self.previous_char.value {
+                    self.current_char.is_escaped = prev == '\\' && !self.previous_char.is_escaped;
+                } else {
+                    self.current_char.is_escaped = false;
+                }
+            },
+            ParserState::SingleQuote => {
+                self.current_char.is_escaped = false;
+            },
+            ParserState::DoubleQuote => {
+
+            }
         }
         self.current_char.value = Some(current_char.clone());
     }
