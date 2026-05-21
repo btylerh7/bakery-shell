@@ -1,7 +1,9 @@
-use std::os::unix::process::CommandExt;
-use std::{path::PathBuf};
-use std::process::Command;
 use crate::repl::REPL;
+use std::fs::write;
+use std::io::Error;
+use std::os::unix::process::CommandExt;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
 pub enum CommandError {
     NotFound,
 }
@@ -56,13 +58,15 @@ impl ShellCommand {
         REPL::print_string(&result);
         REPL::print_string("\r\n");
     }
-    pub fn handle_process(command: &str, args: Vec<String>) {
+    pub fn handle_process(
+        command: &str,
+        args: Vec<String>,
+    ) -> Result<std::process::Output, std::io::Error> {
         let arg0 = &args[0];
         Command::new(command)
             .arg0(arg0)
             .args(args[1..].iter().map(|arg| return arg.trim()))
-            .status()
-            .unwrap();
+            .output()
     }
     pub fn handle_not_found(command: &str) {
         let message = format!("{}: command not found", command.trim());
@@ -78,7 +82,7 @@ impl ShellCommand {
                 new_dir = new_dir.replace("~", &home_dir_string);
             }
         }
-        let check_path = std::path::Path::new(&new_dir);
+        let check_path = Path::new(&new_dir);
         if check_path.exists() {
             if let Err(error) = std::env::set_current_dir(check_path) {
                 println!("Error changing directory to {:?}, {:?}", check_path, error)
@@ -86,6 +90,18 @@ impl ShellCommand {
         } else {
             let message = format!("cd: {}: No such file or directory \r\n", new_dir);
             REPL::print_string(&message);
+        }
+    }
+    pub fn redirect_std_out(mut output: String, file_path: String, remaining_args: Vec<String>) {
+        for arg in remaining_args {
+            output.push_str(&arg);
+        }
+        let path = Path::new(&file_path);
+        if path.is_file() {
+            if let Err(err) = write(path, output) {
+                REPL::print_string("Whoops, couldn't write to file");
+                REPL::print_string(&err.to_string());
+            }
         }
     }
 }
