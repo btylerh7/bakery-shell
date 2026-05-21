@@ -48,12 +48,7 @@ impl REPL {
                         ShellCommand::redirect_std_out(&std_out.join("\n"), file_path, command);
                         std_out.clear();
                     } else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
-                        let args_for_process: Vec<String> = match command.len() {
-                            0 => vec![],
-                            1 => vec![],
-                            _ => command[1..].to_vec()
-                        };
-                        if let Ok(result) = ShellCommand::handle_process(&execute_path, args_for_process) {
+                        if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
                             if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
                                 std_err.push(err.trim_end().to_string());
                             }

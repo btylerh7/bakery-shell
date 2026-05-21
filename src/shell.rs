@@ -25,10 +25,10 @@ impl ShellCommand {
             _ => Err(CommandError::NotFound),
         }
     }
-    pub fn handle_process( command: &str, args: Vec<String>,) -> Result<std::process::Output, std::io::Error> {
-        println!("Command was {}, args[0] was {}", command, &args[0]);
+    pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
+        let original_command_input = args.remove(0);
         Command::new(command)
-            .arg0(command)
+            .arg0(&original_command_input)
             .args(args.iter().map(|arg| return arg.trim()))
             .output()
     }
