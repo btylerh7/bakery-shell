@@ -26,6 +26,7 @@ impl ShellCommand {
         }
     }
     pub fn handle_process( command: &str, args: Vec<String>,) -> Result<std::process::Output, std::io::Error> {
+        println!("Command was {}, args[0] was {}", command, &args[0]);
         Command::new(command)
             .arg0(command)
             .args(args.iter().map(|arg| return arg.trim()))
