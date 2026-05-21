@@ -34,7 +34,7 @@ impl REPL {
                 Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
                 Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&command[1].trim()),
                 _ => {
-                    if &command[0] == ">" {
+                    if &command[0] == ">" || &command[0] == "1>" {
                         let _cmd = command.remove(0);
                         let file_path = command.remove(0);
                         ShellCommand::redirect_std_out(&std_out, file_path, command);
