@@ -52,7 +52,6 @@ impl REPL {
                         let file_path = command.remove(0);
                         ShellCommand::redirect_std_out(&std_out, file_path, command);
                         std_out = String::new();
-                        println!("Setting std out to nothign, {}", std_out);
                     } else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
                         let args_for_process: Vec<String> = match command.len() {
                             0 => vec![],
