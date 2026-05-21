@@ -35,7 +35,7 @@ impl REPL {
                         Err(error) => match error {
                             CommandError::Process(err_message) => {
                                 // std_out = String::new();
-                                std_err.push(err_message);
+                                std_err.push(err_message.trim_end().to_string());
                             },
                             _ => {}
                         }
