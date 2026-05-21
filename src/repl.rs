@@ -45,9 +45,15 @@ impl REPL {
                     if &command[0] == ">" || &command[0] == "1>" {
                         let _cmd = command.remove(0);
                         let file_path = command.remove(0);
-                        ShellCommand::redirect_std_out(&std_out.join("\n"), file_path, command);
+                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command);
                         std_out.clear();
-                    } else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
+                    } else if &command[0] == "2>" {
+                        let _cmd = command.remove(0);
+                        let file_path = command.remove(0);
+                        ShellCommand::redirect_output(&std_err.join("\n"), file_path, command);
+                        std_err.clear();
+                    }
+                    else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
                         if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
                             if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
                                 std_err.push(err.trim_end().to_string());

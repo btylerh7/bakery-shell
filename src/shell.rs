@@ -36,7 +36,7 @@ impl ShellCommand {
         let message = format!("{}: command not found", command.trim());
         message
     }
-    pub fn redirect_std_out(output: &str, file_path: String, remaining_args: Vec<String>) {
+    pub fn redirect_output(output: &str, file_path: String, remaining_args: Vec<String>) {
         let mut result = String::from(output);
         for arg in remaining_args {
             result.push_str(&arg);
