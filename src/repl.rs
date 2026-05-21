@@ -48,10 +48,10 @@ impl REPL {
                         };
                         if let Ok(result) = ShellCommand::handle_process(&execute_path, args_for_process) {
                             if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
-                                err
+                                err.trim_end().to_string()
                             }
                             else if let Ok(out) = String::from_utf8(result.stdout) {
-                                out
+                                out.trim_end().to_string()
                             } else {
                                 String::new()
                             }
