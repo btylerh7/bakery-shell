@@ -10,7 +10,7 @@ impl REPL {
         command
     }
     pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>) {
-        let command = ShellCommand::from_str(&args[0]);
+        let command_name = ShellCommand::from_str(&args[0]);
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
 
@@ -24,33 +24,49 @@ impl REPL {
             current_command.push(arg.clone());
         }
         commands.push(current_command);
-        for command in commands {
-            let previousCommand: Option<Output> = None;
+        let mut std_out = String::new();
+        for mut command in commands {
             let shell_command = ShellCommand::from_str(&command[0]);
-            match shell_command {
+            let output = match shell_command {
                 Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
-                Ok(ShellCommand::Echo) => ShellCommand::handle_echo(&args[1..].join(" ")),
-                Ok(ShellCommand::Type) => ShellCommand::handle_type(&args[1].trim(), paths),
+                Ok(ShellCommand::Echo) => ShellCommand::handle_echo(&command[1..].join(" ")),
+                Ok(ShellCommand::Type) => ShellCommand::handle_type(&command[1].trim(), paths),
                 Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
-                Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&args[1].trim()),
+                Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&command[1].trim()),
                 _ => {
                     if &command[0] == ">" {
-                        let cmd = command.remove(0);
+                        let _cmd = command.remove(0);
                         let file_path = command.remove(0);
-                        if let Some(output) = previousCommand {
-                            println!("{:?} output", output.stderr);
-                            // ShellCommand::redirect_std_out(output.stdout, file_path, command);
-                        }
-                    } else if let Some(execute_path) = REPL::check_in_path(&args[0].trim(), paths) {
-                        if let Ok(result) = ShellCommand::handle_process(&execute_path, args) {
-                            previousCommand = Some(result.clone());
+                        ShellCommand::redirect_std_out(&std_out, file_path, command);
+                        std_out = String::new();
+                        String::new()
+                    } else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
+                        let args_for_process: Vec<String> = match command.len() {
+                            0 => vec![],
+                            1 => vec![],
+                            _ => command[1..].to_vec()
+                        };
+                        if let Ok(result) = ShellCommand::handle_process(&execute_path, args_for_process) {
+                            if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
+                                err
+                            }
+                            else if let Ok(out) = String::from_utf8(result.stdout) {
+                                out
+                            } else {
+                                String::new()
+                            }
+                        } else {
+                            String::new()
                         }
                     } else {
                         ShellCommand::handle_not_found(&args[0].trim())
                     }
                 }
             };
+            std_out.push_str(&output);
         }
+        REPL::print_string(&std_out);
+        REPL::print_string("\r\n");
     }
     pub fn print_string(text: &str) {
         print!("{}", text);
