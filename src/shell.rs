@@ -1,5 +1,6 @@
 use crate::repl::REPL;
 use std::fs::{write, create_dir_all};
+use std::os::unix::process::CommandExt;
 use std::path::{Path};
 use std::process::{Command};
 pub enum CommandError {
@@ -26,6 +27,7 @@ impl ShellCommand {
     }
     pub fn handle_process( command: &str, args: Vec<String>,) -> Result<std::process::Output, std::io::Error> {
         Command::new(command)
+            .arg0(command)
             .args(args.iter().map(|arg| return arg.trim()))
             .output()
     }
