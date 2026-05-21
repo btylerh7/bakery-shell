@@ -1,7 +1,6 @@
 use crate::repl::REPL;
 use std::fs::{write, create_dir_all};
-use std::os::unix::process::CommandExt;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::process::{Command};
 pub enum CommandError {
     NotFound,
