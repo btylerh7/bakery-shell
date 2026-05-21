@@ -1,4 +1,5 @@
-use crate::shell::ShellCommand;
+use crate::shell::{CommandError, ShellCommand};
+use crate::builtins::run_builtin;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Output;
@@ -25,21 +26,33 @@ impl REPL {
         }
         commands.push(current_command);
         let mut std_out = String::new();
+        let mut std_err = String::new();
         for mut command in commands {
+            if !std_err.is_empty() {
+                break
+            }
             let shell_command = ShellCommand::from_str(&command[0]);
-            let output = match shell_command {
-                Ok(ShellCommand::Exit) => ShellCommand::handle_exit(),
-                Ok(ShellCommand::Echo) => ShellCommand::handle_echo(&command[1..].join(" ")),
-                Ok(ShellCommand::Type) => ShellCommand::handle_type(&command[1].trim(), paths),
-                Ok(ShellCommand::Pwd) => ShellCommand::handle_pwd(),
-                Ok(ShellCommand::Cd) => ShellCommand::handle_cd(&command[1].trim()),
+            match shell_command {
+                Ok(shell_cmd) => {
+                    let result = run_builtin(shell_cmd, command, &paths);
+                    match result {
+                        Ok(result_string) => std_out.push_str(&result_string),
+                        Err(error) => match error {
+                            CommandError::Process(err_message) => {
+                                std_out = String::new();
+                                std_err = err_message;
+                            },
+                            _ => {}
+                        }
+                    }
+                },
                 _ => {
                     if &command[0] == ">" || &command[0] == "1>" {
                         let _cmd = command.remove(0);
                         let file_path = command.remove(0);
                         ShellCommand::redirect_std_out(&std_out, file_path, command);
                         std_out = String::new();
-                        String::new()
+                        println!("Setting std out to nothign, {}", std_out);
                     } else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
                         let args_for_process: Vec<String> = match command.len() {
                             0 => vec![],
@@ -48,24 +61,25 @@ impl REPL {
                         };
                         if let Ok(result) = ShellCommand::handle_process(&execute_path, args_for_process) {
                             if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
-                                err.trim_end().to_string()
+                                std_err = err.trim_end().to_string();
                             }
                             else if let Ok(out) = String::from_utf8(result.stdout) {
-                                out.trim_end().to_string()
-                            } else {
-                                String::new()
-                            }
+                                std_out = out.trim_end().to_string();
+                            } else {}
                         } else {
-                            String::new()
+                            std_out = String::new();
                         }
                     } else {
-                        ShellCommand::handle_not_found(&args[0].trim())
+                        std_err = ShellCommand::handle_not_found(&args[0].trim());
                     }
                 }
             };
-            std_out.push_str(&output);
         }
-        if !std_out.is_empty() {
+        if !std_err.is_empty() {
+            REPL::print_string(&std_err);
+            REPL::print_string("\r\n");
+
+        }else if !std_out.is_empty() {
             REPL::print_string(&std_out);
             REPL::print_string("\r\n");
         }

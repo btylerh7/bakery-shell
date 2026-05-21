@@ -2,6 +2,7 @@
 mod parser;
 mod repl;
 mod shell;
+mod builtins;
 use std::{env, path::PathBuf};
 use crate::repl::REPL;
 use crate::parser::Parser;
