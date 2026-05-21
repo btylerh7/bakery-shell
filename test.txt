@@ -1,8 +1,0 @@
-Cargo.lock
-Cargo.toml
-codecrafters.yml
-README.md
-src
-target
-test.txt
-your_program.sh

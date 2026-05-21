@@ -65,8 +65,10 @@ impl REPL {
             };
             std_out.push_str(&output);
         }
-        REPL::print_string(&std_out);
-        REPL::print_string("\r\n");
+        if !std_out.is_empty() {
+            REPL::print_string(&std_out);
+            REPL::print_string("\r\n");
+        }
     }
     pub fn print_string(text: &str) {
         print!("{}", text);
