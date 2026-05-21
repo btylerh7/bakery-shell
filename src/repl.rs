@@ -15,7 +15,7 @@ impl REPL {
         let mut current_command: Vec<String> = vec![];
 
         for arg in args.clone().iter() {
-            if arg.as_str() == ">" {
+            if arg.as_str() == ">" || arg.as_str() == "1>" {
                 commands.push(current_command.clone());
                 current_command.clear();
                 current_command.push(arg.clone().to_string());
