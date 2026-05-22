@@ -1,5 +1,5 @@
 use crate::repl::REPL;
-use std::fs::{write, create_dir_all};
+use std::fs::{write, create_dir_all, read};
 use std::os::unix::process::CommandExt;
 use std::path::{Path};
 use std::process::{Command};
@@ -36,7 +36,7 @@ impl ShellCommand {
         let message = format!("{}: command not found", command.trim());
         message
     }
-    pub fn redirect_output(output: &str, file_path: String, remaining_args: Vec<String>) {
+    pub fn redirect_output(output: &str, file_path: String, remaining_args: Vec<String>, append: bool) {
         let mut result = String::from(output);
         for arg in remaining_args {
             result.push_str(&arg);
@@ -45,6 +45,13 @@ impl ShellCommand {
         if let Some(parent_path) = path.parent() {
             if !parent_path.exists() {
                 let _ = create_dir_all(parent_path);
+            }
+            if append {
+                if let Ok(file_contents) = read(&path) && let Ok(mut new_string) = String::from_utf8(file_contents) {
+                    new_string.push_str("\n");
+                    new_string.push_str(&result);
+                    result = new_string;
+                }
             }
             if let Err(err) = write(path, result) {
                 REPL::print_string("Whoops, couldn't write to file");

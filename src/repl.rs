@@ -14,7 +14,7 @@ impl REPL {
         let mut current_command: Vec<String> = vec![];
 
         for arg in args.clone().iter() {
-            if [">", "1>", "2>" ].contains(&&arg.as_str()) {
+            if [">", "1>", ">>", "1>>", "2>" ].contains(&&arg.as_str()) {
                 commands.push(current_command.clone());
                 current_command.clear();
                 current_command.push(arg.clone().to_string());
@@ -45,13 +45,19 @@ impl REPL {
                     if &command[0] == ">" || &command[0] == "1>" {
                         let _cmd = command.remove(0);
                         let file_path = command.remove(0);
-                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command);
+                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, false);
                         std_out.clear();
                     } else if &command[0] == "2>" {
                         let _cmd = command.remove(0);
                         let file_path = command.remove(0);
-                        ShellCommand::redirect_output(&std_err.join("\n"), file_path, command);
+                        ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, false);
                         std_err.clear();
+                    }
+                    else if &command[0] == ">>" || &command[0] == "1>>" {
+                        let _cmd = command.remove(0);
+                        let file_path = command.remove(0);
+                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, true);
+                        std_out.clear();
                     }
                     else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
                         if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
