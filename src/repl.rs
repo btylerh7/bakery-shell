@@ -42,36 +42,48 @@ impl REPL {
                     }
                 },
                 _ => {
-                    if &command[0] == ">" || &command[0] == "1>" {
-                        let _cmd = command.remove(0);
-                        let file_path = command.remove(0);
-                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, false);
-                        std_out.clear();
-                    } else if &command[0] == "2>" {
-                        let _cmd = command.remove(0);
-                        let file_path = command.remove(0);
-                        ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, false);
-                        std_err.clear();
-                    }
-                    else if &command[0] == ">>" || &command[0] == "1>>" {
-                        let _cmd = command.remove(0);
-                        let file_path = command.remove(0);
-                        ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, true);
-                        std_out.clear();
-                    }
-                    else if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
-                        if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
-                            if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
-                                std_err.push(err.trim_end().to_string());
+                    let command_string = command[0].as_str();
+                    match command_string {
+                        command_string if [">", "1>"].contains(&command_string) => {
+                            let _cmd = command.remove(0);
+                            let file_path = command.remove(0);
+                            ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, false);
+                            std_out.clear();
+                        },
+                        "2>" => {
+                            let _cmd = command.remove(0);
+                            let file_path = command.remove(0);
+                            ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, false);
+                            std_err.clear();
+                        },
+                        command_string if [">>", "1>>"].contains(&command_string) => {
+                            let _cmd = command.remove(0);
+                            let file_path = command.remove(0);
+                            ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, true);
+                            std_out.clear();
+                        },
+                        command_string if [">>", "2>>"].contains(&command_string) => {
+                            let _cmd = command.remove(0);
+                            let file_path = command.remove(0);
+                            ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, true);
+                            std_err.clear();
+                        },
+                        _ => {
+                            if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
+                                if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
+                                    if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
+                                        std_err.push(err.trim_end().to_string());
+                                    }
+                                    if let Ok(out) = String::from_utf8(result.stdout) {
+                                        std_out.push(out.trim_end().to_string());
+                                    } else {}
+                                } else {
+                                    // Std out clear?
+                                }
+                            } else {
+                                std_err.push(ShellCommand::handle_not_found(&args[0].trim()));
                             }
-                            if let Ok(out) = String::from_utf8(result.stdout) {
-                                std_out.push(out.trim_end().to_string());
-                            } else {}
-                        } else {
-                            // Std out clear?
                         }
-                    } else {
-                        std_err.push(ShellCommand::handle_not_found(&args[0].trim()));
                     }
                 }
             };
