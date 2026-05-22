@@ -48,7 +48,9 @@ impl ShellCommand {
             }
             if append {
                 if let Ok(file_contents) = read(&path) && let Ok(mut new_string) = String::from_utf8(file_contents) {
-                    new_string.push_str("\n");
+                    if !new_string.is_empty() {
+                        new_string.push_str("\n");
+                    }
                     new_string.push_str(&result);
                     result = new_string;
                 }
