@@ -41,10 +41,10 @@ to use as much of the standard library as possible.
 
 ### Redirection
 
-- [ ] Redirect stdout
-- [ ] Redirect stderr
-- [ ] Append stdout
-- [ ] Append stderr
+- [x] Redirect stdout
+- [x] Redirect stderr
+- [x] Append stdout
+- [x] Append stderr
 
 ### Command Completion
 
