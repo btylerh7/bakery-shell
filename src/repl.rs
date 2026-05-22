@@ -14,7 +14,7 @@ impl REPL {
         let mut current_command: Vec<String> = vec![];
 
         for arg in args.clone().iter() {
-            if [">", "1>", ">>", "1>>", "2>" ].contains(&&arg.as_str()) {
+            if [">", "1>", ">>", "1>>", "2>", "2>>" ].contains(&&arg.as_str()) {
                 commands.push(current_command.clone());
                 current_command.clear();
                 current_command.push(arg.clone().to_string());
@@ -62,7 +62,7 @@ impl REPL {
                             ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, true);
                             std_out.clear();
                         },
-                        command_string if [">>", "2>>"].contains(&command_string) => {
+                        "2>>" => {
                             let _cmd = command.remove(0);
                             let file_path = command.remove(0);
                             ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, true);
