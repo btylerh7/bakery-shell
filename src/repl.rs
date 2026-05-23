@@ -4,11 +4,6 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 pub struct REPL {}
 impl REPL {
-    pub fn read_input() -> String {
-        let mut command = String::new();
-        io::stdin().read_line(&mut command).unwrap();
-        command
-    }
     pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>) {
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
