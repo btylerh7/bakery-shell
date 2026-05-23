@@ -53,6 +53,9 @@ impl TabEventHandler {
             continue;
         }
         // println!("\n Found {:?}", found_executables);
+        if found_executables.len() == 0 {
+            return None
+        }
         let mut match_text = found_executables[0].replace(current, "");
         match_text.push_str(" ");
         Some(match_text)
