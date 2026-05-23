@@ -1,30 +1,34 @@
+mod builtins;
 #[allow(unused_imports)]
 mod parser;
 mod repl;
 mod shell;
-mod builtins;
-use std::{env, path::PathBuf};
 use rustyline::{Cmd, ConditionalEventHandler, DefaultEditor, EventHandler, KeyEvent};
+use std::{env, path::PathBuf};
 
-use crate::repl::REPL;
 use crate::parser::Parser;
+use crate::repl::REPL;
 
 struct TabEventHandler;
 impl ConditionalEventHandler for TabEventHandler {
-
     fn handle(
         &self,
         evt: &rustyline::Event,
         n: rustyline::RepeatCount,
         positive: bool,
         ctx: &rustyline::EventContext,
-    ) -> Option<rustyline::Cmd>
-    {
+    ) -> Option<rustyline::Cmd> {
+        let options = ["echo", "exit"];
         let current_arg = ctx.line().replace("$ ", "");
-        if current_arg.contains("ech") && current_arg.len() == 3 {
-            return Some(Cmd::Insert(n, String::from("o ")))
+        let matched:Vec<&str> = options.into_iter().filter(|option| {
+            option.starts_with(&current_arg)
+        }).collect();
+        if matched.len() > 0 {
+            let mut auto_fill = matched[0].replace(&current_arg, "");
+            auto_fill.push_str(" ");
+            return Some(Cmd::Insert(n, String::from(auto_fill)));
         }
-            Some(Cmd::Insert(n, String::from("Hiiiii")))
+        None
     }
 }
 
@@ -36,7 +40,10 @@ fn main() {
     }
 
     let mut rl = DefaultEditor::new().unwrap();
-    rl.bind_sequence(KeyEvent::from('\t'), EventHandler::Conditional(Box::new(TabEventHandler)));
+    rl.bind_sequence(
+        KeyEvent::from('\t'),
+        EventHandler::Conditional(Box::new(TabEventHandler)),
+    );
 
     // Eval loop
     loop {
@@ -48,5 +55,3 @@ fn main() {
         REPL::eval(args, &paths);
     }
 }
-
-
