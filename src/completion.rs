@@ -21,7 +21,9 @@ impl ConditionalEventHandler for TabEventHandler {
             auto_fill.push_str(" ");
             return Some(Cmd::Insert(n, String::from(auto_fill)));
         } else {
-            TabEventHandler::check_executable_names(&current_arg);
+            if let Some(matched_executable) = TabEventHandler::check_executable_names(&current_arg) {
+                return Some(Cmd::Insert(n, matched_executable));
+            }
         }
         Some(Cmd::Insert(n, String::from("\x07")))
     }
@@ -32,33 +34,26 @@ impl TabEventHandler {
         if let Some(path_list) = std::env::var_os("PATH") {
             paths = env::split_paths(&path_list).collect();
         }
+        let mut found_executables: Vec<String> = vec![];
         let paths_cloned = paths.clone();
-        let completion_opts:Vec<PathBuf> = paths.into_iter().filter(|path| {
-            if !path.exists() {
-                return false
-            }
-            match Path::read_dir(&path) {
-                Ok(dir_read) => {
-                    println!("checking files in dir {:?}", &dir_read);
-                    let checked_files = dir_read.filter(|file| {
-                        println!("File {:?}", &file);
-                        if let Ok(file_path) = file {
-                            println!("file path name {:?}", file_path.file_name());
-                        }
-                        return false
-                    });
-                    return true
-                },
-                Err(_) => return false
-            };
-        }).collect();
         for p in paths_cloned {
-            let command_check = p.join(current);
-            // if command_check.exists() && REPL::is_executable(&command_check) {
-            //     return Some(command_check.into_os_string().into_string().unwrap());
-            // }
+            if p.exists() {
+                if let Ok(entries) = p.read_dir() {
+                    for entry in entries {
+                        if let Ok(entry_path) = entry {
+                            let path_to_save = entry_path.file_name().into_string().unwrap();
+                            // let path_to_save = entry_path.path().into_os_string().into_string().unwrap();
+                            if path_to_save.starts_with(current) {
+                                found_executables.push(path_to_save)
+                            }
+                        }
+                    }
+                }
+            }
             continue;
         }
-        None
+        // println!("\n Found {:?}", found_executables);
+        let match_text = found_executables[0].replace(current, "");
+        Some(match_text)
     }
 }
