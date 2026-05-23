@@ -28,7 +28,7 @@ impl ConditionalEventHandler for TabEventHandler {
             auto_fill.push_str(" ");
             return Some(Cmd::Insert(n, String::from(auto_fill)));
         }
-        None
+        Some(Cmd::Insert(n, String::from("\x07")))
     }
 }
 
