@@ -72,14 +72,18 @@ impl Completer for TabEventHandler {
     {
 
         let options = ["echo", "exit"];
-        let matched:Vec<Pair> = options.into_iter().filter(|option| {
-            option.starts_with(&line)
-        }).map(|option| {
+        let matched:Vec<Pair> = options.into_iter()
+            .filter(|option| {
+                option.starts_with(&line)
+            })
+            .map(|option| {
                 return Pair{
                     display: option.to_string(),
                     replacement: format!("{} ", option).to_string()
                 }
-            }).collect();
+            })
+            
+            .collect();
         if matched.len() == 0 {
             let matched_executables: Vec<Pair> = TabEventHandler::check_executable_names(&line).into_iter().map(|mat| {
                 let display = mat.clone().to_string();
