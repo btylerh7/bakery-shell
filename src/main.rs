@@ -4,7 +4,9 @@ mod parser;
 mod repl;
 mod shell;
 mod completion;
-use rustyline::{DefaultEditor, EventHandler, KeyEvent};
+use rustyline::config::Configurer;
+use rustyline::history::FileHistory;
+use rustyline::{ Editor, CompletionType, DefaultEditor, EventHandler, KeyEvent, Cmd};
 
 use std::{env, path::PathBuf};
 
@@ -20,10 +22,12 @@ fn main() {
         paths = env::split_paths(&path_list).collect();
     }
 
-    let mut rl = DefaultEditor::new().unwrap();
+    let mut rl: Editor<TabEventHandler, FileHistory> = Editor::new().unwrap();
+    rl.set_helper(Some(TabEventHandler));
+    rl.set_completion_type(CompletionType::List);
     rl.bind_sequence(
         KeyEvent::from('\t'),
-        EventHandler::Conditional(Box::new(TabEventHandler)),
+        Cmd::Complete
     );
 
     // Eval loop
