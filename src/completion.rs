@@ -2,7 +2,7 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::{Cmd, ConditionalEventHandler, Helper};
-use rustyline::completion::{Completer, Pair};
+use rustyline::completion::{Candidate, Completer, Pair};
 use std::path::{Path, PathBuf};
 use std::env;
 
@@ -57,6 +57,7 @@ impl TabEventHandler {
             }
             continue;
         }
+        found_executables.sort_by(|a, b| a.replacement().cmp(&b.replacement()));
         found_executables
     }
 }
