@@ -74,7 +74,12 @@ impl Completer for TabEventHandler {
             let file_candidates = self.file_names.complete_path(curr_arg.as_str(), curr_arg.len());
             match file_candidates {
                 Ok(candidates) => {
-                    let candidate_arr = candidates.1.clone();
+                    let candidate_arr: Vec<Pair> = candidates.1.iter()
+                        .map(|candidate| {
+                            let mut new_rep = candidate.replacement.clone();
+                            new_rep.push_str(" ");
+                            return Pair{display: candidate.display.clone(), replacement: new_rep}
+                        }).collect();
                     return Ok((curr_pos, candidate_arr))
                 }
                 Err(_) => {}
