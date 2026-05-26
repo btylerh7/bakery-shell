@@ -1,39 +1,25 @@
 use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
-use rustyline::{Cmd, ConditionalEventHandler, Helper};
-use rustyline::completion::{Candidate, Completer, Pair};
-use std::path::{Path, PathBuf};
+use rustyline::{ Helper};
+use rustyline::completion::{Candidate, Completer, Pair, FilenameCompleter};
+use std::path::{PathBuf};
 use std::env;
+use crate::parser::Parser;
 
-pub struct TabEventHandler;
-impl ConditionalEventHandler for TabEventHandler {
-    fn handle(
-        &self,
-        evt: &rustyline::Event,
-        n: rustyline::RepeatCount,
-        positive: bool,
-        ctx: &rustyline::EventContext,
-    ) -> Option<rustyline::Cmd> {
-        let options = ["echo", "exit"];
-        let current_arg = ctx.line().replace("$ ", "");
-        println!("\n input is {}", current_arg);
-        let matched:Vec<&str> = options.into_iter().filter(|option| {
-            option.starts_with(&current_arg)
-        }).collect();
-        if matched.len() > 0 {
-            let mut auto_fill = matched[0].replace(&current_arg, "");
-            auto_fill.push_str(" ");
-            return Some(Cmd::Insert(n, String::from(auto_fill)));
-        } else {
-            // if let Some(matched_executable) = TabEventHandler::check_executable_names(&current_arg) {
-            //     return Some(Cmd::Insert(n, matched_executable));
-            // }
-        }
-        Some(Cmd::Insert(n, String::from("\x07")))
-    }
+pub struct TabEventHandler {
+    executables: Vec<String>,
+    file_names: FilenameCompleter,
+    tab_press_count: u8
 }
 impl TabEventHandler {
+    pub fn new() -> TabEventHandler {
+        return TabEventHandler {
+            executables: vec![],
+            file_names: FilenameCompleter::new(),
+            tab_press_count: 0
+        }
+    }
     pub fn check_executable_names(current: &str) -> Vec<String> {
         let mut paths: Vec<PathBuf> = vec![];
         if let Some(path_list) = std::env::var_os("PATH") {
@@ -58,7 +44,14 @@ impl TabEventHandler {
             continue;
         }
         found_executables.sort_by(|a, b| a.replacement().cmp(&b.replacement()));
+        found_executables.dedup_by(|a, b| a.display() == b.display());
         found_executables
+    }
+    pub fn get_pos_of_arg(args: &Vec<String>) -> usize {
+        let index = args.len() - 1;
+        let mut recreated_string = args[0..index].to_vec().join(" ");
+        recreated_string.push_str(" ");
+        recreated_string.len()
     }
 }
 
@@ -72,6 +65,21 @@ impl Completer for TabEventHandler {
     ) -> rustyline::Result<(usize, Vec<Self::Candidate>)>
     {
 
+        let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
+        if args.len() > 1 {
+            let curr_pos = TabEventHandler::get_pos_of_arg(&args);
+            let array_length = args.len() - 1;
+            let curr_arg = &args[array_length];
+
+            let file_candidates = self.file_names.complete_path(curr_arg.as_str(), curr_arg.len());
+            match file_candidates {
+                Ok(candidates) => {
+                    let candidate_arr = candidates.1.clone();
+                    return Ok((curr_pos, candidate_arr))
+                }
+                Err(_) => {}
+            }
+        }
         let options = ["echo", "exit"];
         let matched:Vec<Pair> = options.into_iter()
             .filter(|option| {
