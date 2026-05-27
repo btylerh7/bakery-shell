@@ -77,7 +77,9 @@ impl Completer for TabEventHandler {
                     let candidate_arr: Vec<Pair> = candidates.1.iter()
                         .map(|candidate| {
                             let mut new_rep = candidate.replacement.clone();
-                            new_rep.push_str(" ");
+                            if !new_rep.ends_with("/") {
+                                new_rep.push_str(" ");
+                            }
                             return Pair{display: candidate.display.clone(), replacement: new_rep}
                         }).collect();
                     return Ok((curr_pos, candidate_arr))
