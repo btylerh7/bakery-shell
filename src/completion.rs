@@ -76,7 +76,7 @@ impl Completer for TabEventHandler {
                             if !new_rep.ends_with("/") {
                                 new_rep.push_str(" ");
                             }
-                            return Pair{display: candidate.display.clone(), replacement: new_rep}
+                            return Pair{display: candidate.replacement.clone(), replacement: new_rep}
                         }).collect();
                     return Ok((pos, candidate_arr))
                 }
@@ -97,7 +97,7 @@ impl Completer for TabEventHandler {
                             if !new_rep.ends_with("/") {
                                 new_rep.push_str(" ");
                             }
-                            return Pair{display: candidate.display.clone(), replacement: new_rep}
+                            return Pair{display: candidate.replacement.clone(), replacement: new_rep}
                         }).collect();
                     return Ok((curr_pos, candidate_arr))
                 }

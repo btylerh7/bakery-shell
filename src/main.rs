@@ -25,6 +25,7 @@ fn main() {
     let mut rl: Editor<TabEventHandler, FileHistory> = Editor::new().unwrap();
     rl.set_helper(Some(TabEventHandler::new()));
     rl.set_completion_type(CompletionType::List);
+    rl.set_bell_style(rustyline::config::BellStyle::Audible);
     rl.bind_sequence(
         KeyEvent::from('\t'),
         Cmd::Complete
