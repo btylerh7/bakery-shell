@@ -104,7 +104,7 @@ impl Completer for TabEventHandler {
                 Err(_) => {}
             }
         }
-        let options = ["echo", "exit"];
+        let options = ["echo", "exit", "complete"];
         let matched:Vec<Pair> = options.into_iter()
             .filter(|option| {
                 option.starts_with(&line)

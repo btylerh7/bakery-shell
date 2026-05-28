@@ -16,7 +16,7 @@ pub fn run_builtin(command: ShellCommand, args: Vec<String>, paths: &Vec<PathBuf
         ShellCommand::Echo => echo::handle_echo(&args[1..].join(" ")),
         ShellCommand::Type => typecmd::handle_type(&args[1], paths),
         ShellCommand::Pwd => pwd::handle_pwd(),
-        ShellCommand::Complete => complete::handle_complete(),
+        ShellCommand::Complete => complete::handle_complete(&args),
     }
 
 }
