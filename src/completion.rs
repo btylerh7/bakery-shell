@@ -3,7 +3,6 @@ use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::Helper;
 use rustyline::completion::{Candidate, Completer, Pair, FilenameCompleter};
-use std::ops::Index;
 use std::path::PathBuf;
 use std::env;
 
@@ -67,7 +66,23 @@ impl Completer for TabEventHandler {
 
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
         
-        let last_char = line.to_string().chars().last();
+        if let Some(last_char) = line.to_string().chars().last() && last_char.is_whitespace() {
+            let file_candidates = self.file_names.complete_path(line, pos);
+            match file_candidates {
+                Ok(candidates) => {
+                    let candidate_arr: Vec<Pair> = candidates.1.iter()
+                        .map(|candidate| {
+                            let mut new_rep = candidate.replacement.clone();
+                            if !new_rep.ends_with("/") {
+                                new_rep.push_str(" ");
+                            }
+                            return Pair{display: candidate.display.clone(), replacement: new_rep}
+                        }).collect();
+                    return Ok((pos, candidate_arr))
+                }
+                Err(_) => {}
+            }
+        }
         if args.len() > 1 {
             let curr_pos = TabEventHandler::get_pos_of_arg(&args);
             let array_length = args.len() - 1;
