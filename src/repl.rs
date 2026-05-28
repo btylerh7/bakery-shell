@@ -1,10 +1,11 @@
 use crate::shell::{CommandError, ShellCommand};
 use crate::builtins::run_builtin;
+use std::collections::HashMap;
 use std::io::{self, Write};
 use std::path::PathBuf;
 pub struct REPL {}
 impl REPL {
-    pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>) {
+    pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>, completions: &mut HashMap<String, String>) {
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
 
@@ -24,7 +25,7 @@ impl REPL {
             let shell_command = ShellCommand::from_str(&command[0]);
             match shell_command {
                 Ok(shell_cmd) => {
-                    let result = run_builtin(shell_cmd, command, &paths);
+                    let result = run_builtin(shell_cmd, command, &paths, completions);
                     match result {
                         Ok(result_string) => std_out.push(result_string),
                         Err(error) => match error {
