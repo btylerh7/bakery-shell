@@ -7,7 +7,6 @@ pub fn handle_complete(args: &Vec<String>, completions: &mut HashMap<String, Str
         match args[1].as_str() {
             "-p" => {
                 if args.len() >= 3 && !args[2].is_empty() {
-                    println!("{:?}", completions);
                     if let Some(path) = completions.get(&args[2]) {
                         let message = format!("complete -C '{}' {}", path, &args[2] );
                         return Ok(message)
