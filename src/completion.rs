@@ -1,11 +1,11 @@
 use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
-use rustyline::{ Helper};
+use rustyline::Helper;
 use rustyline::completion::{Candidate, Completer, Pair, FilenameCompleter};
-use std::path::{PathBuf};
+use std::ops::Index;
+use std::path::PathBuf;
 use std::env;
-use crate::parser::Parser;
 
 pub struct TabEventHandler {
     executables: Vec<String>,
@@ -66,6 +66,8 @@ impl Completer for TabEventHandler {
     {
 
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
+        
+        let last_char = line.to_string().chars().last();
         if args.len() > 1 {
             let curr_pos = TabEventHandler::get_pos_of_arg(&args);
             let array_length = args.len() - 1;
