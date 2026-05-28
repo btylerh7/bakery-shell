@@ -5,9 +5,9 @@ pub fn handle_complete(args: &Vec<String>) -> Result<String, CommandError> {
         match args[1].as_str() {
             "-p" => {
                 let message = format!("complete: {}: no completion specification", &args[2]).to_string();
-                REPL::print_string(&message);
+                return Ok(message)
             },
-            _ => {}
+            _ => {println!("Args were {:?}", &args)}
         }
     }
     Ok(String::new())
