@@ -13,6 +13,7 @@ pub enum ShellCommand {
     Type,
     Pwd,
     Cd,
+    Complete
 }
 impl ShellCommand {
     pub fn from_str(check: &str) -> Result<Self, CommandError> {
@@ -22,6 +23,7 @@ impl ShellCommand {
             "type" => Ok(ShellCommand::Type),
             "pwd" => Ok(ShellCommand::Pwd),
             "cd" => Ok(ShellCommand::Cd),
+            "complete" => Ok(ShellCommand::Complete),
             _ => Err(CommandError::NotFound),
         }
     }

@@ -48,20 +48,32 @@ to use as much of the standard library as possible.
 
 ### Command Completion
 
-- [ ] Builtin completion
-- [ ] Completion with arguments
-- [ ] Missing completions
-- [ ] Executable completion
-- [ ] Multiple completions
-- [ ] Partial completions
+- [x] Builtin completion
+- [x] missing completions
+- [x] executable completion
+- [x] multiple completions
+- [x] partial completions
 
-### Filename Completion
+### filename completion
 
-- [ ] File completion
-- [ ] Nested file completion
-- [ ] Directory completion
-- [ ] Multiple matches 
-- [ ] Partial completions
-- [ ] Multi-argument completions
+- [x] file completion
+- [x] nested file completion
+- [x] directory completion
+- [x] multiple matches 
+- [x] partial completions
+- [x] multi-argument completions
+
+### Programmable Completion
+
+- [ ] Register complete builtin
+- [ ] Printing missing specifications
+- [ ] Displaying registered specifications
+- [ ] Single completion
+- [ ] Handling no completions
+- [ ] Passing comand-line arguments
+- [ ] Passing environment variables
+- [ ] Multiple completer candidates
+- [ ] Longest common prefix
+- [ ] Unregister a completion
 
 More to the course, but I will add the checklist later.
