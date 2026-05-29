@@ -2,23 +2,14 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::Helper;
-use rustyline::completion::{Candidate, Completer, Pair, FilenameCompleter};
+use rustyline::completion::{Candidate, Completer, Pair};
 use std::path::PathBuf;
 use std::env;
 
-pub struct TabEventHandler {
-    executables: Vec<String>,
-    file_names: FilenameCompleter,
-    tab_press_count: u8
-}
-impl TabEventHandler {
-    pub fn new() -> TabEventHandler {
-        return TabEventHandler {
-            executables: vec![],
-            file_names: FilenameCompleter::new(),
-            tab_press_count: 0
-        }
-    }
+use crate::repl::REPL;
+use crate::shell::{ShellCommand, ShellHelper};
+
+impl ShellHelper {
     pub fn check_executable_names(current: &str) -> Vec<String> {
         let mut paths: Vec<PathBuf> = vec![];
         if let Some(path_list) = std::env::var_os("PATH") {
@@ -54,7 +45,7 @@ impl TabEventHandler {
     }
 }
 
-impl Completer for TabEventHandler {
+impl Completer for ShellHelper {
     type Candidate = Pair;
     fn complete(
         &self, 
@@ -67,6 +58,11 @@ impl Completer for TabEventHandler {
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
         
         if let Some(last_char) = line.to_string().chars().last() && last_char.is_whitespace() {
+            if args.len() == 1 {
+                if let Some(found_completions) = ShellHelper::run_completer_script(&args[0], &self.completions) {
+                    return Ok((pos, found_completions))
+                }
+            }
             let file_candidates = self.file_names.complete_path(line, pos);
             match file_candidates {
                 Ok(candidates) => {
@@ -84,7 +80,7 @@ impl Completer for TabEventHandler {
             }
         }
         if args.len() > 1 {
-            let curr_pos = TabEventHandler::get_pos_of_arg(&args);
+            let curr_pos = ShellHelper::get_pos_of_arg(&args);
             let array_length = args.len() - 1;
             let curr_arg = &args[array_length];
 
@@ -118,7 +114,7 @@ impl Completer for TabEventHandler {
             
             .collect();
         if matched.len() == 0 {
-            let matched_executables: Vec<Pair> = TabEventHandler::check_executable_names(&line).into_iter().map(|mat| {
+            let matched_executables: Vec<Pair> = ShellHelper::check_executable_names(&line).into_iter().map(|mat| {
                 let display = mat.clone().to_string();
                 Pair {
                     display: display,
@@ -132,9 +128,9 @@ impl Completer for TabEventHandler {
     }
 
 }
-impl Helper for TabEventHandler {}
-impl Validator for TabEventHandler {}
-impl Hinter for TabEventHandler {
+impl Helper for ShellHelper {}
+impl Validator for ShellHelper {}
+impl Hinter for ShellHelper {
     type Hint = String;
 }
-impl Highlighter for TabEventHandler {}
+impl Highlighter for ShellHelper {}

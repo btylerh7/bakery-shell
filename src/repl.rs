@@ -1,11 +1,15 @@
-use crate::shell::{CommandError, ShellCommand};
+
+use rustyline::history::FileHistory;
+
+use crate::shell::{CommandError, ShellCommand, ShellHelper};
 use crate::builtins::run_builtin;
 use std::collections::HashMap;
 use std::io::{self, Write};
 use std::path::PathBuf;
-pub struct REPL {}
+
+pub struct REPL;
 impl REPL {
-    pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>, completions: &mut HashMap<String, String>) {
+    pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>, rl: &mut rustyline::Editor<ShellHelper, FileHistory>) {
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
 
@@ -25,6 +29,11 @@ impl REPL {
             let shell_command = ShellCommand::from_str(&command[0]);
             match shell_command {
                 Ok(shell_cmd) => {
+                    // Check if there are any registered completions from the complete builtin
+                    let completions = match rl.helper_mut() {
+                        Some(helper) => helper,
+                        None => &mut ShellHelper::new()
+                    };
                     let result = run_builtin(shell_cmd, command, &paths, completions);
                     match result {
                         Ok(result_string) => std_out.push(result_string),
@@ -43,30 +52,30 @@ impl REPL {
                         command_string if [">", "1>"].contains(&command_string) => {
                             let _cmd = command.remove(0);
                             let file_path = command.remove(0);
-                            ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, false);
+                            ShellHelper::redirect_output(&std_out.join("\n"), file_path, command, false);
                             std_out.clear();
                         },
                         "2>" => {
                             let _cmd = command.remove(0);
                             let file_path = command.remove(0);
-                            ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, false);
+                            ShellHelper::redirect_output(&std_err.join("\n"), file_path, command, false);
                             std_err.clear();
                         },
                         command_string if [">>", "1>>"].contains(&command_string) => {
                             let _cmd = command.remove(0);
                             let file_path = command.remove(0);
-                            ShellCommand::redirect_output(&std_out.join("\n"), file_path, command, true);
+                            ShellHelper::redirect_output(&std_out.join("\n"), file_path, command, true);
                             std_out.clear();
                         },
                         "2>>" => {
                             let _cmd = command.remove(0);
                             let file_path = command.remove(0);
-                            ShellCommand::redirect_output(&std_err.join("\n"), file_path, command, true);
+                            ShellHelper::redirect_output(&std_err.join("\n"), file_path, command, true);
                             std_err.clear();
                         },
                         _ => {
                             if let Some(execute_path) = REPL::check_in_path(&command[0].trim(), paths) {
-                                if let Ok(result) = ShellCommand::handle_process(&execute_path, command.to_vec()) {
+                                if let Ok(result) = ShellHelper::handle_process(&execute_path, command.to_vec()) {
                                     if result.stderr.len() > 0 && let Ok(err) = String::from_utf8(result.stderr) {
                                         std_err.push(err.trim_end().to_string());
                                     }
@@ -77,7 +86,7 @@ impl REPL {
                                     // Std out clear?
                                 }
                             } else {
-                                std_err.push(ShellCommand::handle_not_found(&args[0].trim()));
+                                std_err.push(ShellHelper::handle_not_found(&args[0].trim()));
                             }
                         }
                     }

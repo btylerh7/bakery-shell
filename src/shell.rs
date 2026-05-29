@@ -1,8 +1,12 @@
+use rustyline::completion::{FilenameCompleter, Pair};
+
+use crate::parser::Parser;
 use crate::repl::REPL;
 use std::fs::{write, create_dir_all, read};
 use std::os::unix::process::CommandExt;
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 use std::process::{Command};
+use std::collections::HashMap;
 pub enum CommandError {
     NotFound,
     Process(String)
@@ -26,6 +30,41 @@ impl ShellCommand {
             "complete" => Ok(ShellCommand::Complete),
             _ => Err(CommandError::NotFound),
         }
+    }
+}
+pub struct ShellHelper {
+    pub file_names: FilenameCompleter,
+    pub completions: HashMap<String, String>
+}
+impl ShellHelper {
+    pub fn new() -> Self {
+        ShellHelper {
+            file_names: FilenameCompleter::new(),
+            completions: HashMap::new()
+        }
+    }
+    pub fn run_completer_script(command: &str, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
+        println!("Command was {}\n Completions were {:?}", command, completions);
+        // TODO: This is not returning results, clean up if statements to be less confusing
+        if let Some(file_path) = completions.get(command) {
+            if let Ok(result) = ShellHelper::handle_process(&file_path, vec![command.to_string()]) {
+                if let Ok(out) = String::from_utf8(result.stdout) {
+                    let completion_opts:Vec<Pair> = out.lines().map(|line| {
+                        let path_string = line.to_string();
+                        let path = std::path::Path::new(&path_string);
+                        if path.exists() && REPL::is_executable(&path.to_path_buf()) {
+                            let mut replace_str = line.to_string();
+                            replace_str.push_str(" ");
+                            return Pair{display: line.to_string(), replacement: replace_str}
+                        } else {
+                            return Pair{display: String::new(), replacement: String::new()}
+                        }
+                    }).collect();
+                    return Some(completion_opts)
+                }
+            }
+        }
+        None
     }
     pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
         let original_command_input = args.remove(0);
