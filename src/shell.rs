@@ -55,18 +55,6 @@ impl ShellHelper {
                 Pair { display: line.to_string(), replacement: replace_string}
             })
             .collect();
-            // .map(|line| {
-            //     let command = line.clone();
-            //     let path = Path::new(command);
-            //     (command.to_owned(), path.to_owned())
-            // })
-            // .filter(|path| path.1.exists() && REPL::is_executable(&path.1.to_path_buf()))
-            // .map(|file_name| {
-            //     let mut replace_str = file_name.0.to_string();
-            //     replace_str.push_str(" ");
-            //     return Pair{display: file_name.0.to_string(), replacement: replace_str}
-            // })
-            // .collect();
         Some(completion_opts)
     }
     pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
