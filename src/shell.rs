@@ -1,6 +1,5 @@
 use rustyline::completion::{FilenameCompleter, Pair};
 
-use crate::parser::Parser;
 use crate::repl::REPL;
 use std::fs::{write, create_dir_all, read};
 use std::os::unix::process::CommandExt;
@@ -17,7 +16,8 @@ pub enum ShellCommand {
     Type,
     Pwd,
     Cd,
-    Complete
+    Complete,
+    Jobs
 }
 impl ShellCommand {
     pub fn from_str(check: &str) -> Result<Self, CommandError> {
@@ -27,6 +27,7 @@ impl ShellCommand {
             "type" => Ok(ShellCommand::Type),
             "pwd" => Ok(ShellCommand::Pwd),
             "cd" => Ok(ShellCommand::Cd),
+            "jobs" => Ok(ShellCommand::Jobs),
             "complete" => Ok(ShellCommand::Complete),
             _ => Err(CommandError::NotFound),
         }
@@ -53,7 +54,7 @@ impl ShellHelper {
         let length = args.len();
         let file_path = completions.get(command)?;
         // Arg1: Command, Arg2: Word being completed, Arg3: Previous arg after Command, if it exists
-        let mut completion_args = vec![
+        let mut completion_args = [
             command.clone().to_string(),
             String::new(),
             String::new()

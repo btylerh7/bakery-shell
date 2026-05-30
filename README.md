@@ -65,15 +65,20 @@ to use as much of the standard library as possible.
 
 ### Programmable Completion
 
-- [ ] Register complete builtin
-- [ ] Printing missing specifications
-- [ ] Displaying registered specifications
-- [ ] Single completion
-- [ ] Handling no completions
-- [ ] Passing comand-line arguments
-- [ ] Passing environment variables
-- [ ] Multiple completer candidates
-- [ ] Longest common prefix
-- [ ] Unregister a completion
+- [x] Register complete builtin
+- [x] Printing missing specifications
+- [x] Displaying registered specifications
+- [x] Single completion
+- [x] Handling no completions
+- [x] Passing comand-line arguments
+- [x] Passing environment variables
+- [x] Multiple completer candidates
+- [x] Longest common prefix
+- [x] Unregister a completion
+
+### Background Jobs
+- [ ] The jobs builtin
+- [ ] Starting background jobs
+- [ ] Printing background job output
 
 More to the course, but I will add the checklist later.

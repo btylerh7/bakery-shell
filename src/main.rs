@@ -33,7 +33,7 @@ fn main() {
 
     // Eval loop
     loop {
-        let input = rl.readline("$ ").unwrap_or(String::new());
+        let input = rl.readline("$ ").unwrap_or_default();
         let mut arg_parser = Parser::new();
         let args = arg_parser.parse_arg_string(&input);
         REPL::eval(args, &paths, &mut rl);

@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::collections::HashMap;
 use crate::shell::{CommandError, ShellCommand, ShellHelper};
 
+pub mod jobs;
 pub mod cd;
 pub mod exit;
 pub mod echo;
@@ -17,6 +18,7 @@ pub fn run_builtin(command: ShellCommand, args: Vec<String>, paths: &Vec<PathBuf
         ShellCommand::Type => typecmd::handle_type(&args[1], paths),
         ShellCommand::Pwd => pwd::handle_pwd(),
         ShellCommand::Complete => complete::handle_complete(&args, completions),
+        ShellCommand::Jobs => jobs::handle_jobs()
     }
 
 }
