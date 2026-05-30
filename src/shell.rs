@@ -43,7 +43,12 @@ impl ShellHelper {
             completions: HashMap::new()
         }
     }
-    pub fn run_completer_script(args: &Vec<String>, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
+    pub fn run_completer_script(
+        args: &Vec<String>, 
+        completions: &HashMap<String, String>,
+        line: &str,
+        pos: &usize
+    ) -> Option<Vec<Pair>> {
         let command = &args[0];
         let length = args.len();
         let file_path = completions.get(command)?;
@@ -63,6 +68,8 @@ impl ShellHelper {
         let process_result = Command::new(file_path)
             .arg0(file_path)
             .args(completion_args.iter().map(|arg| return arg.trim()))
+            .env("COMP_LINE", line)
+            .env("COMP_POINT", format!("{}", pos))
             .output().ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
         let completion_opts:Vec<Pair> = out.lines()

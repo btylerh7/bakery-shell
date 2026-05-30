@@ -70,7 +70,7 @@ impl Completer for ShellHelper {
 
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
         // check for programmable completions
-        if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions) {
+        if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions, line, &pos) {
             let candidate_arr = ShellHelper::append_space_to_completion(found_completions);
 
             let curr_pos = if args.len() > 1 {
