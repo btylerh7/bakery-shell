@@ -44,27 +44,30 @@ impl ShellHelper {
         }
     }
     pub fn run_completer_script(command: &str, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
-        println!("Command was {}\n Completions were {:?}", command, completions);
-        // TODO: This is not returning results, clean up if statements to be less confusing
-        if let Some(file_path) = completions.get(command) {
-            if let Ok(result) = ShellHelper::handle_process(&file_path, vec![command.to_string()]) {
-                if let Ok(out) = String::from_utf8(result.stdout) {
-                    let completion_opts:Vec<Pair> = out.lines().map(|line| {
-                        let path_string = line.to_string();
-                        let path = std::path::Path::new(&path_string);
-                        if path.exists() && REPL::is_executable(&path.to_path_buf()) {
-                            let mut replace_str = line.to_string();
-                            replace_str.push_str(" ");
-                            return Pair{display: line.to_string(), replacement: replace_str}
-                        } else {
-                            return Pair{display: String::new(), replacement: String::new()}
-                        }
-                    }).collect();
-                    return Some(completion_opts)
-                }
-            }
-        }
-        None
+        let file_path = completions.get(command)?;
+        let process_result = ShellHelper::handle_process(&file_path, vec![command.to_string()]).ok()?;
+        let out = String::from_utf8(process_result.stdout).ok()?;
+        let completion_opts:Vec<Pair> = out.lines()
+            .filter(|line| !line.is_empty())
+            .map(|line| {
+                let mut replace_string = line.to_string();
+                replace_string.push(' ');
+                Pair { display: line.to_string(), replacement: replace_string}
+            })
+            .collect();
+            // .map(|line| {
+            //     let command = line.clone();
+            //     let path = Path::new(command);
+            //     (command.to_owned(), path.to_owned())
+            // })
+            // .filter(|path| path.1.exists() && REPL::is_executable(&path.1.to_path_buf()))
+            // .map(|file_name| {
+            //     let mut replace_str = file_name.0.to_string();
+            //     replace_str.push_str(" ");
+            //     return Pair{display: file_name.0.to_string(), replacement: replace_str}
+            // })
+            // .collect();
+        Some(completion_opts)
     }
     pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
         let original_command_input = args.remove(0);
