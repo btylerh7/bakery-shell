@@ -21,6 +21,9 @@ pub fn handle_complete(args: &Vec<String>, completions: &mut ShellHelper) -> Res
                     let value = args[2].clone().to_string();
                     completions.completions.insert(key, value);
                 }
+            },
+            "-r" => {
+                completions.completions.remove_entry(&args[2].to_string());
             }
             _ => {println!("Args were {:?}", &args)}
         }
