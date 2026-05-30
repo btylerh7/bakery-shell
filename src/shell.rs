@@ -43,9 +43,24 @@ impl ShellHelper {
             completions: HashMap::new()
         }
     }
-    pub fn run_completer_script(command: &str, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
+    pub fn run_completer_script(args: &Vec<String>, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
+
+        let command = &args[0];
+        let length = args.len();
         let file_path = completions.get(command)?;
-        let process_result = ShellHelper::handle_process(&file_path, vec![command.to_string()]).ok()?;
+        // Arg1: Command, Arg2: Word being completed, Arg3: Previous arg after Command, if it exists
+        let mut completion_args = vec![
+            command.clone().to_string(),
+            String::new(),
+            String::new()
+        ];
+        if length > 1 {
+            completion_args[1] = args.last().unwrap_or(&String::new()).to_string();
+        }
+        if length > 2 {
+            completion_args[2] = args[length - 1].clone();
+        }
+        let process_result = ShellHelper::handle_process(&file_path, completion_args).ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
         let completion_opts:Vec<Pair> = out.lines()
             .filter(|line| !line.is_empty())
