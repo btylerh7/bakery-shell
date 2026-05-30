@@ -72,7 +72,7 @@ impl ShellHelper {
             .env("COMP_POINT", format!("{}", pos))
             .output().ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
-        let completion_opts:Vec<Pair> = out.lines()
+        let mut completion_opts:Vec<Pair> = out.lines()
             .filter(|line| {
                 let empty = !line.is_empty();
                 if length > 1 && !args[length - 1].is_empty() {
@@ -83,6 +83,8 @@ impl ShellHelper {
             })
             .map(|line| Pair { display: line.to_string(), replacement: line.to_string()})
             .collect();
+        completion_opts.sort_by(|a, b| a.replacement.cmp(&b.replacement));
+        completion_opts.dedup_by(|a, b| a.display == b.display);
         Some(completion_opts)
     }
     pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
