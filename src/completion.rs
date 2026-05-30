@@ -71,7 +71,8 @@ impl Completer for ShellHelper {
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
         // check for programmable completions
         if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions) {
-            return Ok((pos, found_completions))
+            let candidate_arr = ShellHelper::append_space_to_completion(found_completions);
+            return Ok((pos, candidate_arr))
         }
         let last_char = line.to_string().chars().last();
         if  last_char.is_some_and(|ch| ch.is_whitespace()) {

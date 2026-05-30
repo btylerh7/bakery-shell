@@ -44,7 +44,6 @@ impl ShellHelper {
         }
     }
     pub fn run_completer_script(args: &Vec<String>, completions: &HashMap<String, String>) -> Option<Vec<Pair>> {
-
         let command = &args[0];
         let length = args.len();
         let file_path = completions.get(command)?;
@@ -55,10 +54,10 @@ impl ShellHelper {
             String::new()
         ];
         if length > 1 {
-            completion_args[1] = args.last().unwrap_or(&String::new()).to_string();
+            completion_args[1] = args[length - 1].clone(); 
         }
         if length > 2 {
-            completion_args[2] = args[length - 1].clone();
+            completion_args[2] = args[length - 2].clone();
         }
         let process_result = ShellHelper::handle_process(&file_path, completion_args).ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
