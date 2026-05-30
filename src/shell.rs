@@ -60,11 +60,8 @@ impl ShellHelper {
         ];
         if length > 1 {
             completion_args[1] = args[length - 1].clone(); 
-        }
-        if length > 2 {
             completion_args[2] = args[length - 2].clone();
         }
-        println!("Args {:?}", completion_args);
         let process_result = Command::new(file_path)
             .arg0(file_path)
             .args(completion_args.iter().map(|arg| return arg.trim()))
