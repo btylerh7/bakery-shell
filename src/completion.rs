@@ -72,7 +72,11 @@ impl Completer for ShellHelper {
         // check for programmable completions
         if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions) {
             let candidate_arr = ShellHelper::append_space_to_completion(found_completions);
-            return Ok((pos, candidate_arr))
+
+            let curr_pos = if args.len() > 1 {
+                ShellHelper::get_pos_of_arg(&args)
+            } else { pos };
+            return Ok((curr_pos, candidate_arr))
         }
         let last_char = line.to_string().chars().last();
         if  last_char.is_some_and(|ch| ch.is_whitespace()) {

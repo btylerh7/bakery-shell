@@ -62,12 +62,15 @@ impl ShellHelper {
         let process_result = ShellHelper::handle_process(&file_path, completion_args).ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
         let completion_opts:Vec<Pair> = out.lines()
-            .filter(|line| !line.is_empty())
-            .map(|line| {
-                let mut replace_string = line.to_string();
-                replace_string.push(' ');
-                Pair { display: line.to_string(), replacement: replace_string}
+            .filter(|line| {
+                let empty = !line.is_empty();
+                if length > 1 && !args[length - 1].is_empty() {
+                    let comp = line.starts_with(&args[length - 1]);
+                    return comp && empty
+                }
+                return empty
             })
+            .map(|line| Pair { display: line.to_string(), replacement: line.to_string()})
             .collect();
         Some(completion_opts)
     }
