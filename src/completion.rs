@@ -45,7 +45,7 @@ impl ShellHelper {
         recreated_string.len()
     }
     pub fn append_space_to_completion(candidates: Vec<Pair>) -> Vec<Pair> {
-        let candidate_arr: Vec<Pair> = candidates.1
+        let candidate_arr: Vec<Pair> = candidates
             .iter()
             .map(|candidate| {
                 let mut new_rep = candidate.replacement.clone();
@@ -69,13 +69,12 @@ impl Completer for ShellHelper {
     {
 
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
-        
+        // check for programmable completions
+        if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions) {
+            return Ok((pos, found_completions))
+        }
         let last_char = line.to_string().chars().last();
         if  last_char.is_some_and(|ch| ch.is_whitespace()) {
-            // check for programmable completions
-            if let Some(found_completions) = ShellHelper::run_completer_script(&args[0], &self.completions) {
-                return Ok((pos, found_completions))
-            }
             // add filepaths as completion options
             let file_candidates = self.file_names.complete_path(line, pos);
             match file_candidates {
