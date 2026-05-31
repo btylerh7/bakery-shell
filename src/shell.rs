@@ -35,13 +35,15 @@ impl ShellCommand {
 }
 pub struct ShellHelper {
     pub file_names: FilenameCompleter,
-    pub completions: HashMap<String, String>
+    pub completions: HashMap<String, String>,
+    pub running_jobs: HashMap<u8, u8>
 }
 impl ShellHelper {
     pub fn new() -> Self {
         ShellHelper {
             file_names: FilenameCompleter::new(),
-            completions: HashMap::new()
+            completions: HashMap::new(),
+            running_jobs: HashMap::new()
         }
     }
     pub fn run_completer_script(

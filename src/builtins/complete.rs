@@ -1,5 +1,4 @@
 use crate::shell::{CommandError, ShellHelper};
-use std::collections::HashMap;
 
 
 pub fn handle_complete(args: &Vec<String>, completions: &mut ShellHelper) -> Result<String, CommandError> {

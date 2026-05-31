@@ -1,18 +1,89 @@
-
 use rustyline::history::FileHistory;
 
 use crate::shell::{CommandError, ShellCommand, ShellHelper};
 use crate::builtins::run_builtin;
-use std::collections::HashMap;
+use std::clone;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Command {
+    args: Vec<String>, // args[0] will be command name that was passed
+    executable_path: String,
+    background: bool,
+    is_builtin: bool,
+    redirect: bool,
+    std_out: Option<PathBuf>,
+    std_err: Option<PathBuf>,
+    append: bool
+}
+impl Command {
+    pub fn new() -> Self {
+        Command {
+            args: vec![],
+            executable_path: String::new(),
+            background: false,
+            is_builtin: false,
+            redirect: false,
+            std_out: None,
+            std_err: None,
+            append: false
+        }
+    }
+}
 
 pub struct REPL;
 impl REPL {
-    pub fn eval(args: Vec<String>, paths: &Vec<PathBuf>, rl: &mut rustyline::Editor<ShellHelper, FileHistory>) {
+    pub fn determine_commands(mut args:Vec<String>, paths: &Vec<PathBuf>) -> Vec<Command> {
+        let mut commands: Vec<Command> = vec![];
+        let redirect_symbols = vec![">", "1>", ">>", "1>>", "2>", "2>>"];
+        let mut current_command = Command::new();
+        let mut iter = args.into_iter();
+        while let Some(arg) = iter.next() {
+
+            // output or error needs to be redirected
+            if redirect_symbols.contains(&arg.as_str()) {
+                if let Some(file_path_str) = iter.next() {
+                    let path_new = Path::new(&file_path_str);
+                    if vec![">", "1>"].contains(&arg.as_str()) {
+                        current_command.std_out = Some(path_new.to_path_buf());
+                        current_command.redirect = true;
+                    }
+                    if arg.as_str() == "2>" {
+                        current_command.std_err = Some(path_new.to_path_buf());
+                        current_command.redirect = true;
+                    }
+                    if vec![">>", "1>>"].contains(&arg.as_str()) {
+                        current_command.std_out = Some(path_new.to_path_buf());
+                        current_command.redirect = true;
+                        current_command.append = true;
+                    }
+                    if vec!["2>>"].contains(&arg.as_str()) {
+                        current_command.std_err = Some(path_new.to_path_buf());
+                        current_command.redirect = true;
+                        current_command.append = true;
+                    }
+                }
+                commands.push(current_command.clone());
+                current_command = Command::new();
+
+            } else {
+                current_command.args.push(arg);
+            }
+        }
+        commands
+    }
+    pub fn eval(mut args: Vec<String>, paths: &Vec<PathBuf>, rl: &mut rustyline::Editor<ShellHelper, FileHistory>) {
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
 
+        // spawn background process
+        if args[args.len() - 1] == "&".to_string() {
+            let _ = args.pop();
+            REPL::eval(args, paths, rl);
+            return
+        }
+        // Redirect standard out or standard error
         for arg in args.clone().iter() {
             if [">", "1>", ">>", "1>>", "2>", "2>>" ].contains(&&arg.as_str()) {
                 commands.push(current_command.clone());
