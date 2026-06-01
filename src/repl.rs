@@ -12,7 +12,6 @@ pub struct Command {
     executable_path: String,
     background: bool,
     is_builtin: bool,
-    redirect: bool,
     std_out: Option<PathBuf>,
     std_err: Option<PathBuf>,
     append: bool
@@ -24,7 +23,6 @@ impl Command {
             executable_path: String::new(),
             background: false,
             is_builtin: false,
-            redirect: false,
             std_out: None,
             std_err: None,
             append: false
@@ -45,22 +43,18 @@ impl REPL {
             if redirect_symbols.contains(&arg.as_str()) {
                 if let Some(file_path_str) = iter.next() {
                     let path_new = Path::new(&file_path_str);
-                    if vec![">", "1>"].contains(&arg.as_str()) {
+                    if arg == ">" || arg == "1>" {
                         current_command.std_out = Some(path_new.to_path_buf());
-                        current_command.redirect = true;
                     }
                     if arg.as_str() == "2>" {
                         current_command.std_err = Some(path_new.to_path_buf());
-                        current_command.redirect = true;
                     }
-                    if vec![">>", "1>>"].contains(&arg.as_str()) {
+                    if arg == ">>" || arg == "1>>" {
                         current_command.std_out = Some(path_new.to_path_buf());
-                        current_command.redirect = true;
                         current_command.append = true;
                     }
-                    if vec!["2>>"].contains(&arg.as_str()) {
+                    if arg == "2>>" {
                         current_command.std_err = Some(path_new.to_path_buf());
-                        current_command.redirect = true;
                         current_command.append = true;
                     }
                 }
@@ -71,18 +65,36 @@ impl REPL {
                 current_command.args.push(arg);
             }
         }
+        commands.iter_mut().for_each(|command| {
+            let shell_command = ShellCommand::from_str(&command.args[0]);
+            match shell_command {
+                // Is a builtin
+                Ok(_) => {command.is_builtin = true},
+                // Not a builtin, locate executable
+                Err(_) => {
+                    if let Some(execute_path) = REPL::check_in_path(&command.args[0].trim(), paths) {
+                        command.executable_path = execute_path;
+                    }
+
+                }
+            }
+            // Run as background job
+            if command.args[command.args.len() - 1] == "&" {
+                let _ = command.args.pop();
+                command.background = true;
+            }
+        });
         commands
+    }
+    pub fn eval2(mut args: Vec<String>, paths: &Vec<PathBuf>, rl: &mut rustyline::Editor<ShellHelper, FileHistory>) {
+        let commands = REPL::determine_commands(args, paths);
+        let mut std_out: Vec<String> = vec![];
+        
     }
     pub fn eval(mut args: Vec<String>, paths: &Vec<PathBuf>, rl: &mut rustyline::Editor<ShellHelper, FileHistory>) {
         let mut commands: Vec<Vec<String>> = vec![];
         let mut current_command: Vec<String> = vec![];
 
-        // spawn background process
-        if args[args.len() - 1] == "&".to_string() {
-            let _ = args.pop();
-            REPL::eval(args, paths, rl);
-            return
-        }
         // Redirect standard out or standard error
         for arg in args.clone().iter() {
             if [">", "1>", ">>", "1>>", "2>", "2>>" ].contains(&&arg.as_str()) {
