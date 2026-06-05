@@ -1,19 +1,18 @@
 mod builtins;
+mod completion;
 #[allow(unused_imports)]
 mod parser;
 mod repl;
 mod shell;
-mod completion;
 use rustyline::config::Configurer;
 use rustyline::history::FileHistory;
-use rustyline::{ Editor, CompletionType, KeyEvent, Cmd};
+use rustyline::{Cmd, CompletionType, Editor, KeyEvent};
 
 use std::{env, path::PathBuf};
 
 use crate::parser::Parser;
 use crate::repl::REPL;
 use crate::shell::ShellHelper;
-
 
 fn main() {
     // Load path environment variable
@@ -26,16 +25,14 @@ fn main() {
     rl.set_helper(Some(ShellHelper::new()));
     rl.set_completion_type(CompletionType::List);
     rl.set_bell_style(rustyline::config::BellStyle::Audible);
-    rl.bind_sequence(
-        KeyEvent::from('\t'),
-        Cmd::Complete
-    );
+    rl.bind_sequence(KeyEvent::from('\t'), Cmd::Complete);
 
     // Eval loop
     loop {
         let input = rl.readline("$ ").unwrap_or_default();
         let mut arg_parser = Parser::new();
         let args = arg_parser.parse_arg_string(&input);
-        REPL::eval(args, &paths, &mut rl);
+        let mut repl = REPL::new();
+        repl.eval2(args, &paths, &mut rl);
     }
 }

@@ -1,34 +1,37 @@
 use rustyline::completion::{FilenameCompleter, Pair};
 
 use crate::repl::REPL;
-use std::fs::{write, create_dir_all, read};
+use std::collections::HashMap;
+use std::fs::{create_dir_all, read, write};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command};
-use std::collections::HashMap;
+use std::process::Command;
+#[derive(Debug)]
 pub enum CommandError {
     NotFound,
-    Process(String)
+    Process(String),
 }
-pub enum ShellCommand {
+
+#[derive(Debug)]
+pub enum ShellBuiltin {
     Exit,
     Echo,
     Type,
     Pwd,
     Cd,
     Complete,
-    Jobs
+    Jobs,
 }
-impl ShellCommand {
+impl ShellBuiltin {
     pub fn from_str(check: &str) -> Result<Self, CommandError> {
         match check.trim() {
-            "exit" => Ok(ShellCommand::Exit),
-            "echo" => Ok(ShellCommand::Echo),
-            "type" => Ok(ShellCommand::Type),
-            "pwd" => Ok(ShellCommand::Pwd),
-            "cd" => Ok(ShellCommand::Cd),
-            "jobs" => Ok(ShellCommand::Jobs),
-            "complete" => Ok(ShellCommand::Complete),
+            "exit" => Ok(ShellBuiltin::Exit),
+            "echo" => Ok(ShellBuiltin::Echo),
+            "type" => Ok(ShellBuiltin::Type),
+            "pwd" => Ok(ShellBuiltin::Pwd),
+            "cd" => Ok(ShellBuiltin::Cd),
+            "jobs" => Ok(ShellBuiltin::Jobs),
+            "complete" => Ok(ShellBuiltin::Complete),
             _ => Err(CommandError::NotFound),
         }
     }
@@ -36,33 +39,29 @@ impl ShellCommand {
 pub struct ShellHelper {
     pub file_names: FilenameCompleter,
     pub completions: HashMap<String, String>,
-    pub running_jobs: HashMap<u8, u8>
+    pub running_jobs: HashMap<usize, u32>,
 }
 impl ShellHelper {
     pub fn new() -> Self {
         ShellHelper {
             file_names: FilenameCompleter::new(),
             completions: HashMap::new(),
-            running_jobs: HashMap::new()
+            running_jobs: HashMap::new(),
         }
     }
     pub fn run_completer_script(
-        args: &Vec<String>, 
+        args: &Vec<String>,
         completions: &HashMap<String, String>,
         line: &str,
-        pos: &usize
+        pos: &usize,
     ) -> Option<Vec<Pair>> {
         let command = &args[0];
         let length = args.len();
         let file_path = completions.get(command)?;
         // Arg1: Command, Arg2: Word being completed, Arg3: Previous arg after Command, if it exists
-        let mut completion_args = [
-            command.clone().to_string(),
-            String::new(),
-            String::new()
-        ];
+        let mut completion_args = [command.clone().to_string(), String::new(), String::new()];
         if length > 1 {
-            completion_args[1] = args[length - 1].clone(); 
+            completion_args[1] = args[length - 1].clone();
             completion_args[2] = args[length - 2].clone();
         }
         let process_result = Command::new(file_path)
@@ -70,24 +69,32 @@ impl ShellHelper {
             .args(completion_args.iter().map(|arg| return arg.trim()))
             .env("COMP_LINE", line)
             .env("COMP_POINT", format!("{}", pos))
-            .output().ok()?;
+            .output()
+            .ok()?;
         let out = String::from_utf8(process_result.stdout).ok()?;
-        let mut completion_opts:Vec<Pair> = out.lines()
+        let mut completion_opts: Vec<Pair> = out
+            .lines()
             .filter(|line| {
                 let empty = !line.is_empty();
                 if length > 1 && !args[length - 1].is_empty() {
                     let comp = line.starts_with(&args[length - 1]);
-                    return comp && empty
+                    return comp && empty;
                 }
-                return empty
+                return empty;
             })
-            .map(|line| Pair { display: line.to_string(), replacement: line.to_string()})
+            .map(|line| Pair {
+                display: line.to_string(),
+                replacement: line.to_string(),
+            })
             .collect();
         completion_opts.sort_by(|a, b| a.replacement.cmp(&b.replacement));
         completion_opts.dedup_by(|a, b| a.display == b.display);
         Some(completion_opts)
     }
-    pub fn handle_process( command: &str,mut args: Vec<String>) -> Result<std::process::Output, std::io::Error> {
+    pub fn handle_process(
+        command: &str,
+        mut args: Vec<String>,
+    ) -> Result<std::process::Output, std::io::Error> {
         let original_command_input = args.remove(0);
         Command::new(command)
             .arg0(&original_command_input)
@@ -98,7 +105,12 @@ impl ShellHelper {
         let message = format!("{}: command not found", command.trim());
         message
     }
-    pub fn redirect_output(output: &str, file_path: String, remaining_args: Vec<String>, append: bool) {
+    pub fn redirect_output(
+        output: &str,
+        file_path: String,
+        remaining_args: Vec<String>,
+        append: bool,
+    ) {
         let mut result = String::from(output);
         for arg in remaining_args {
             result.push_str(&arg);
@@ -109,7 +121,9 @@ impl ShellHelper {
                 let _ = create_dir_all(parent_path);
             }
             if append {
-                if let Ok(file_contents) = read(&path) && let Ok(mut new_string) = String::from_utf8(file_contents) {
+                if let Ok(file_contents) = read(&path)
+                    && let Ok(mut new_string) = String::from_utf8(file_contents)
+                {
                     if !new_string.is_empty() {
                         new_string.push_str("\n");
                     }

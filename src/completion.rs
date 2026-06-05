@@ -1,14 +1,14 @@
+use rustyline::Helper;
+use rustyline::completion::{Candidate, Completer, Pair};
 use rustyline::error::ReadlineError;
 use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
-use rustyline::Helper;
-use rustyline::completion::{Candidate, Completer, Pair};
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 
 use crate::repl::REPL;
-use crate::shell::{ShellCommand, ShellHelper};
+use crate::shell::{ShellBuiltin, ShellHelper};
 
 impl ShellHelper {
     pub fn check_executable_names(current: &str) -> Vec<String> {
@@ -52,8 +52,12 @@ impl ShellHelper {
                 if !new_rep.ends_with("/") {
                     new_rep.push_str(" ");
                 }
-                return Pair{display: candidate.replacement.clone(), replacement: new_rep}
-            }).collect();
+                return Pair {
+                    display: candidate.replacement.clone(),
+                    replacement: new_rep,
+                };
+            })
+            .collect();
         candidate_arr
     }
 }
@@ -61,31 +65,33 @@ impl ShellHelper {
 impl Completer for ShellHelper {
     type Candidate = Pair;
     fn complete(
-        &self, 
+        &self,
         line: &str,
         pos: usize,
         ctx: &rustyline::Context<'_>,
-    ) -> rustyline::Result<(usize, Vec<Self::Candidate>)>
-    {
-
+    ) -> rustyline::Result<(usize, Vec<Self::Candidate>)> {
         let args: Vec<String> = line.split_whitespace().map(|res| res.to_string()).collect();
         // check for programmable completions
-        if let Some(found_completions) = ShellHelper::run_completer_script(&args, &self.completions, line, &pos) {
+        if let Some(found_completions) =
+            ShellHelper::run_completer_script(&args, &self.completions, line, &pos)
+        {
             let candidate_arr = ShellHelper::append_space_to_completion(found_completions);
 
             let curr_pos = if args.len() > 1 {
                 ShellHelper::get_pos_of_arg(&args)
-            } else { pos };
-            return Ok((curr_pos, candidate_arr))
+            } else {
+                pos
+            };
+            return Ok((curr_pos, candidate_arr));
         }
         let last_char = line.to_string().chars().last();
-        if  last_char.is_some_and(|ch| ch.is_whitespace()) {
+        if last_char.is_some_and(|ch| ch.is_whitespace()) {
             // add filepaths as completion options
             let file_candidates = self.file_names.complete_path(line, pos);
             match file_candidates {
                 Ok(candidates) => {
                     let candidate_arr = ShellHelper::append_space_to_completion(candidates.1);
-                    return Ok((pos, candidate_arr))
+                    return Ok((pos, candidate_arr));
                 }
                 Err(_) => {}
             }
@@ -97,11 +103,13 @@ impl Completer for ShellHelper {
             let array_length = args.len() - 1;
             let curr_arg = &args[array_length];
 
-            let file_candidates = self.file_names.complete_path(curr_arg.as_str(), curr_arg.len());
+            let file_candidates = self
+                .file_names
+                .complete_path(curr_arg.as_str(), curr_arg.len());
             match file_candidates {
                 Ok(candidates) => {
                     let candidate_arr = ShellHelper::append_space_to_completion(candidates.1);
-                    return Ok((curr_pos, candidate_arr))
+                    return Ok((curr_pos, candidate_arr));
                 }
                 Err(_) => {}
             }
@@ -110,31 +118,28 @@ impl Completer for ShellHelper {
         let options = ["echo", "exit", "complete"];
         let matched_builtins: Vec<Pair> = options
             .into_iter()
-            .filter(|option| {
-                option.starts_with(&line)
-            })
-            .map(|option| {
-                Pair{
-                    display: option.to_string(),
-                    replacement: format!("{} ", option).to_string()
-                }
+            .filter(|option| option.starts_with(&line))
+            .map(|option| Pair {
+                display: option.to_string(),
+                replacement: format!("{} ", option).to_string(),
             })
             .collect();
         if matched_builtins.len() == 0 {
             // Check for other executables on path that match
-            let matched_executables: Vec<Pair> = ShellHelper::check_executable_names(&line).into_iter().map(|mat| {
-                let display = mat.clone().to_string();
-                Pair {
-                    display: display,
-                    replacement: format!("{} ", mat).to_string()
-                }
-            }).collect();
-            return Ok((0, matched_executables))
-            
+            let matched_executables: Vec<Pair> = ShellHelper::check_executable_names(&line)
+                .into_iter()
+                .map(|mat| {
+                    let display = mat.clone().to_string();
+                    Pair {
+                        display: display,
+                        replacement: format!("{} ", mat).to_string(),
+                    }
+                })
+                .collect();
+            return Ok((0, matched_executables));
         }
         Ok((0, matched_builtins))
     }
-
 }
 impl Helper for ShellHelper {}
 impl Validator for ShellHelper {}

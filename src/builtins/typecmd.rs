@@ -1,10 +1,10 @@
-use crate::shell::CommandError;
-use crate::shell::ShellCommand;
 use crate::repl::REPL;
+use crate::shell::CommandError;
+use crate::shell::ShellBuiltin;
 use std::path::PathBuf;
 
 pub fn handle_type(command: &str, paths: &Vec<PathBuf>) -> Result<String, CommandError> {
-    match ShellCommand::from_str(command.trim()) {
+    match ShellBuiltin::from_str(command.trim()) {
         Ok(_) => Ok(format!("{} is a shell builtin", command)),
         Err(_) => {
             let in_path = REPL::check_in_path(&command, paths);
