@@ -112,9 +112,10 @@ impl ShellHelper {
         append: bool,
     ) {
         let mut result = String::from(output);
-        for arg in remaining_args {
-            result.push_str(&arg);
-        }
+        // TODO: Why is this here?
+        // for arg in remaining_args {
+        //     result.push_str(&arg);
+        // }
         let path = Path::new(&file_path);
         if let Some(parent_path) = path.parent() {
             if !parent_path.exists() {

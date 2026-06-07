@@ -1,1 +1,0 @@
-ls: cannot access 'j': No such file or directorylsj

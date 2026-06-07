@@ -70,8 +70,6 @@ impl REPL {
                         current_command.append = true;
                     }
                 }
-                commands.push(current_command.clone());
-                current_command = ShellCommand::new();
             } else {
                 current_command.args.push(arg);
             }
