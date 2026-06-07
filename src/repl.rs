@@ -29,6 +29,9 @@ impl ShellCommand {
             append: false,
         }
     }
+    pub fn is_empty(&self) -> bool {
+        return *self == ShellCommand::new();
+    }
 }
 
 pub struct REPL {
@@ -73,7 +76,9 @@ impl REPL {
                 current_command.args.push(arg);
             }
         }
-        commands.push(current_command);
+        if !current_command.is_empty() {
+            commands.push(current_command);
+        }
         commands.iter_mut().for_each(|command| {
             let shell_command = ShellBuiltin::from_str(&command.args[0]);
             match shell_command {
@@ -126,7 +131,7 @@ impl REPL {
             if let Some(out_path) = command.std_err {
                 let path = out_path.as_os_str().to_str().unwrap();
                 ShellHelper::redirect_output(
-                    &self.std_out.join(""),
+                    &self.std_err.join(""),
                     String::from(path),
                     command.args.clone(),
                     command.append,
