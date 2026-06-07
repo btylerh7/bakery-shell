@@ -106,9 +106,6 @@ impl REPL {
             }
         });
         commands
-            .into_iter()
-            .filter(|command| command.executable_path != String::from("N/A"))
-            .collect()
     }
     pub fn eval2(
         &mut self,
