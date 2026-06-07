@@ -45,7 +45,11 @@ impl REPL {
             std_err: vec![],
         }
     }
-    pub fn determine_commands(&self, args: Vec<String>, paths: &Vec<PathBuf>) -> Vec<ShellCommand> {
+    pub fn determine_commands(
+        &mut self,
+        args: Vec<String>,
+        paths: &Vec<PathBuf>,
+    ) -> Vec<ShellCommand> {
         let mut commands: Vec<ShellCommand> = vec![];
         let redirect_symbols = vec![">", "1>", ">>", "1>>", "2>", "2>>"];
         let mut current_command = ShellCommand::new();
@@ -87,6 +91,11 @@ impl REPL {
                     if let Some(execute_path) = REPL::check_in_path(&command.args[0].trim(), paths)
                     {
                         command.executable_path = execute_path;
+                    } else {
+                        let original_cmd = command.args[0].clone();
+                        self.std_err
+                            .push(ShellHelper::handle_not_found(&original_cmd.trim()));
+                        command.executable_path = String::from("N/A");
                     }
                 }
             }
@@ -97,6 +106,9 @@ impl REPL {
             }
         });
         commands
+            .into_iter()
+            .filter(|command| command.executable_path != String::from("N/A"))
+            .collect()
     }
     pub fn eval2(
         &mut self,
