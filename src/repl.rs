@@ -91,11 +91,6 @@ impl REPL {
                     if let Some(execute_path) = REPL::check_in_path(&command.args[0].trim(), paths)
                     {
                         command.executable_path = execute_path;
-                    } else {
-                        let original_cmd = command.args[0].clone();
-                        self.std_err
-                            .push(ShellHelper::handle_not_found(&original_cmd.trim()));
-                        command.executable_path = String::from("N/A");
                     }
                 }
             }
@@ -221,23 +216,28 @@ impl REPL {
         }
     }
     pub fn handle_executable(&mut self, command: &ShellCommand, paths: &Vec<PathBuf>) {
-        if let Some(execute_path) = REPL::check_in_path(&&command.executable_path.trim(), paths) {
-            if let Ok(result) = ShellHelper::handle_process(&execute_path, command.args.to_vec()) {
-                if result.stderr.len() > 0
-                    && let Ok(err) = String::from_utf8(result.stderr)
+        match REPL::check_in_path(&&command.executable_path.trim(), paths) {
+            Some(execute_path) => {
+                if let Ok(result) =
+                    ShellHelper::handle_process(&execute_path, command.args.to_vec())
                 {
-                    self.std_err.push(err.trim_end().to_string());
-                }
-                if let Ok(out) = String::from_utf8(result.stdout) {
-                    self.std_out.push(out.trim_end().to_string());
+                    if result.stderr.len() > 0
+                        && let Ok(err) = String::from_utf8(result.stderr)
+                    {
+                        self.std_err.push(err.trim_end().to_string());
+                    }
+                    if let Ok(out) = String::from_utf8(result.stdout) {
+                        self.std_out.push(out.trim_end().to_string());
+                    } else {
+                    }
                 } else {
+                    // Std out clear?
                 }
-            } else {
-                // Std out clear?
             }
-        } else {
-            self.std_err
-                .push(ShellHelper::handle_not_found(&command.args[0].trim()));
+            None => {
+                self.std_err
+                    .push(ShellHelper::handle_not_found(&command.args[0].trim()));
+            }
         }
     }
     pub fn eval(
@@ -374,6 +374,9 @@ impl REPL {
     }
 
     pub fn check_in_path(command: &str, paths: &Vec<PathBuf>) -> Option<String> {
+        if command.is_empty() {
+            return None;
+        }
         let paths_cloned = paths.clone();
         for p in paths_cloned {
             let command_check = p.join(command);
