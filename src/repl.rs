@@ -1,7 +1,7 @@
 use rustyline::history::FileHistory;
 
 use crate::builtins::run_builtin;
-use crate::shell::{CommandError, ShellBuiltin, ShellHelper};
+use crate::shell::{CommandError, RunningJob, ShellBuiltin, ShellHelper};
 use std::io::{self, BufReader, Read, Write};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -174,6 +174,7 @@ impl REPL {
         command: &ShellCommand,
         rl: &mut rustyline::Editor<ShellHelper, FileHistory>,
     ) {
+        let original = format!("{} &", command.args.clone().join(" "));
         let mut args = command.args.clone();
         let arg0 = args.remove(0);
         let p = std::process::Command::new(&command.executable_path)
@@ -186,7 +187,13 @@ impl REPL {
                 None => &mut ShellHelper::new(),
             };
             let count = completions.running_jobs.len() + 1;
-            completions.running_jobs.insert(count, process_info.id());
+            let job = RunningJob {
+                job_number: count,
+                process_id: process_info.id(),
+                command_string: original,
+                status: "Running".to_string(),
+            };
+            completions.running_jobs.push(job);
             let out = format!("[{}] {}", count, process_info.id());
             self.std_out.push(out.to_string());
         }

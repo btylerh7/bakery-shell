@@ -36,17 +36,23 @@ impl ShellBuiltin {
         }
     }
 }
+pub struct RunningJob {
+    pub job_number: usize,
+    pub process_id: u32,
+    pub command_string: String,
+    pub status: String,
+}
 pub struct ShellHelper {
     pub file_names: FilenameCompleter,
     pub completions: HashMap<String, String>,
-    pub running_jobs: HashMap<usize, u32>,
+    pub running_jobs: Vec<RunningJob>,
 }
 impl ShellHelper {
     pub fn new() -> Self {
         ShellHelper {
             file_names: FilenameCompleter::new(),
             completions: HashMap::new(),
-            running_jobs: HashMap::new(),
+            running_jobs: vec![],
         }
     }
     pub fn run_completer_script(
