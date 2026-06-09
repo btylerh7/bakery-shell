@@ -33,6 +33,6 @@ fn main() {
         let mut arg_parser = Parser::new();
         let args = arg_parser.parse_arg_string(&input);
         let mut repl = REPL::new();
-        repl.eval2(args, &paths, &mut rl);
+        repl.eval(args, &paths, &mut rl);
     }
 }

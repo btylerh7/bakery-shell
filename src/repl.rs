@@ -102,7 +102,7 @@ impl REPL {
         });
         commands
     }
-    pub fn eval2(
+    pub fn eval(
         &mut self,
         args: Vec<String>,
         paths: &Vec<PathBuf>,
@@ -238,134 +238,6 @@ impl REPL {
                 self.std_err
                     .push(ShellHelper::handle_not_found(&command.args[0].trim()));
             }
-        }
-    }
-    pub fn eval(
-        mut args: Vec<String>,
-        paths: &Vec<PathBuf>,
-        rl: &mut rustyline::Editor<ShellHelper, FileHistory>,
-    ) {
-        let mut commands: Vec<Vec<String>> = vec![];
-        let mut current_command: Vec<String> = vec![];
-
-        // Redirect standard out or standard error
-        for arg in args.clone().iter() {
-            if [">", "1>", ">>", "1>>", "2>", "2>>"].contains(&&arg.as_str()) {
-                commands.push(current_command.clone());
-                current_command.clear();
-                current_command.push(arg.clone().to_string());
-                continue;
-            }
-            current_command.push(arg.clone());
-        }
-        commands.push(current_command);
-        let mut std_out: Vec<String> = vec![];
-        let mut std_err: Vec<String> = vec![];
-        for mut command in commands {
-            let shell_command = ShellBuiltin::from_str(&command[0]);
-            match shell_command {
-                Ok(shell_cmd) => {
-                    // Check if there are any registered completions from the complete builtin
-                    let completions = match rl.helper_mut() {
-                        Some(helper) => helper,
-                        None => &mut ShellHelper::new(),
-                    };
-                    let result = run_builtin(shell_cmd, command, &paths, completions);
-                    match result {
-                        Ok(result_string) => std_out.push(result_string),
-                        Err(error) => match error {
-                            CommandError::Process(err_message) => {
-                                // std_out = String::new();
-                                std_err.push(err_message.trim_end().to_string());
-                            }
-                            _ => {}
-                        },
-                    }
-                }
-                _ => {
-                    let command_string = command[0].as_str();
-                    match command_string {
-                        command_string if [">", "1>"].contains(&command_string) => {
-                            let _cmd = command.remove(0);
-                            let file_path = command.remove(0);
-                            ShellHelper::redirect_output(
-                                &std_out.join("\n"),
-                                file_path,
-                                command,
-                                false,
-                            );
-                            std_out.clear();
-                        }
-                        "2>" => {
-                            let _cmd = command.remove(0);
-                            let file_path = command.remove(0);
-                            ShellHelper::redirect_output(
-                                &std_err.join("\n"),
-                                file_path,
-                                command,
-                                false,
-                            );
-                            std_err.clear();
-                        }
-                        command_string if [">>", "1>>"].contains(&command_string) => {
-                            let _cmd = command.remove(0);
-                            let file_path = command.remove(0);
-                            ShellHelper::redirect_output(
-                                &std_out.join("\n"),
-                                file_path,
-                                command,
-                                true,
-                            );
-                            std_out.clear();
-                        }
-                        "2>>" => {
-                            let _cmd = command.remove(0);
-                            let file_path = command.remove(0);
-                            ShellHelper::redirect_output(
-                                &std_err.join("\n"),
-                                file_path,
-                                command,
-                                true,
-                            );
-                            std_err.clear();
-                        }
-                        _ => {
-                            if let Some(execute_path) =
-                                REPL::check_in_path(&command[0].trim(), paths)
-                            {
-                                if let Ok(result) =
-                                    ShellHelper::handle_process(&execute_path, command.to_vec())
-                                {
-                                    if result.stderr.len() > 0
-                                        && let Ok(err) = String::from_utf8(result.stderr)
-                                    {
-                                        std_err.push(err.trim_end().to_string());
-                                    }
-                                    if let Ok(out) = String::from_utf8(result.stdout) {
-                                        std_out.push(out.trim_end().to_string());
-                                    } else {
-                                    }
-                                } else {
-                                    // Std out clear?
-                                }
-                            } else {
-                                std_err.push(ShellHelper::handle_not_found(&args[0].trim()));
-                            }
-                        }
-                    }
-                }
-            };
-        }
-        std_out = std_out
-            .into_iter()
-            .filter(|output| !output.is_empty())
-            .collect();
-        if !std_err.is_empty() {
-            REPL::print_string(&std_err.join("\n"));
-            REPL::print_string("\r\n");
-        } else if !std_out.is_empty() {
-            REPL::print_string(&std_out.join("\n"));
-            REPL::print_string("\r\n");
         }
     }
     pub fn print_string(text: &str) {
