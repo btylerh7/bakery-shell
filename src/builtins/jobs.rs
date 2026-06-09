@@ -2,11 +2,13 @@ use crate::shell::{CommandError, RunningJob};
 
 pub fn handle_jobs(jobs: &Vec<RunningJob>) -> Result<String, CommandError> {
     for (i, job) in jobs.iter().enumerate() {
-        let is_most_recent = i == jobs.len() - 1;
-        let most_recent_symbol = match is_most_recent {
-            true => "+",
-            false => "",
-        };
+        let mut most_recent_symbol = "";
+        if i == jobs.len() - 1 {
+            most_recent_symbol = "+"
+        }
+        if i == jobs.len() - 2 {
+            most_recent_symbol = "-"
+        }
         let pad_length = 24 - job.status.len();
         let mut padded_status = job.status.clone();
         let number = job.job_number.clone();
