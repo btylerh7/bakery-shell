@@ -1,5 +1,4 @@
 use crate::shell::{CommandError, ShellBuiltin, ShellHelper};
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub mod cd;
@@ -23,6 +22,6 @@ pub fn run_builtin(
         ShellBuiltin::Type => typecmd::handle_type(&args[1], paths),
         ShellBuiltin::Pwd => pwd::handle_pwd(),
         ShellBuiltin::Complete => complete::handle_complete(&args, completions),
-        ShellBuiltin::Jobs => jobs::handle_jobs(&completions.running_jobs),
+        ShellBuiltin::Jobs => jobs::handle_jobs(&mut completions.running_jobs),
     }
 }

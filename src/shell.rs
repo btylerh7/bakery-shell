@@ -4,8 +4,8 @@ use crate::repl::REPL;
 use std::collections::HashMap;
 use std::fs::{create_dir_all, read, write};
 use std::os::unix::process::CommandExt;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::path::Path;
+use std::process::{Child, Command};
 #[derive(Debug)]
 pub enum CommandError {
     NotFound,
@@ -41,6 +41,7 @@ pub struct RunningJob {
     pub process_id: u32,
     pub command_string: String,
     pub status: String,
+    pub process_info: Child,
 }
 pub struct ShellHelper {
     pub file_names: FilenameCompleter,

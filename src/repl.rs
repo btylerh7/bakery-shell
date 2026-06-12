@@ -2,10 +2,9 @@ use rustyline::history::FileHistory;
 
 use crate::builtins::run_builtin;
 use crate::shell::{CommandError, RunningJob, ShellBuiltin, ShellHelper};
-use std::io::{self, BufReader, Read, Write};
+use std::io::{self, Write};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::thread;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShellCommand {
@@ -54,23 +53,24 @@ impl REPL {
         let redirect_symbols = vec![">", "1>", ">>", "1>>", "2>", "2>>"];
         let mut current_command = ShellCommand::new();
         let mut iter = args.into_iter();
+
         while let Some(arg) = iter.next() {
             // output or error needs to be redirected
             if redirect_symbols.contains(&arg.as_str()) {
                 if let Some(file_path_str) = iter.next() {
-                    let path_new = Path::new(&file_path_str);
+                    let redirect_path = Path::new(&file_path_str);
                     if arg == ">" || arg == "1>" {
-                        current_command.std_out = Some(path_new.to_path_buf());
+                        current_command.std_out = Some(redirect_path.to_path_buf());
                     }
                     if arg.as_str() == "2>" {
-                        current_command.std_err = Some(path_new.to_path_buf());
+                        current_command.std_err = Some(redirect_path.to_path_buf());
                     }
                     if arg == ">>" || arg == "1>>" {
-                        current_command.std_out = Some(path_new.to_path_buf());
+                        current_command.std_out = Some(redirect_path.to_path_buf());
                         current_command.append = true;
                     }
                     if arg == "2>>" {
-                        current_command.std_err = Some(path_new.to_path_buf());
+                        current_command.std_err = Some(redirect_path.to_path_buf());
                         current_command.append = true;
                     }
                 }
@@ -192,9 +192,10 @@ impl REPL {
                 process_id: process_info.id(),
                 command_string: original,
                 status: "Running".to_string(),
+                process_info: process_info,
             };
+            let out = format!("[{}] {}", count, job.process_id);
             completions.running_jobs.push(job);
-            let out = format!("[{}] {}", count, process_info.id());
             self.std_out.push(out.to_string());
         }
     }

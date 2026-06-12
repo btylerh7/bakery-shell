@@ -1,13 +1,17 @@
 use crate::shell::{CommandError, RunningJob};
 
-pub fn handle_jobs(jobs: &Vec<RunningJob>) -> Result<String, CommandError> {
-    for (i, job) in jobs.iter().enumerate() {
+pub fn handle_jobs(jobs: &mut Vec<RunningJob>) -> Result<String, CommandError> {
+    let len = jobs.len();
+    for (i, job) in jobs.iter_mut().enumerate() {
         let mut most_recent_symbol = "";
-        if i == jobs.len() - 1 {
+        if len > 0 && i == len - 1 {
             most_recent_symbol = "+"
         }
-        if i == jobs.len() - 2 {
+        if len > 1 && i == len - 2 {
             most_recent_symbol = "-"
+        }
+        if matches!(job.process_info.try_wait(), Ok(Some(_))) {
+            job.status = "Done".to_string();
         }
         let pad_length = 24 - job.status.len();
         let mut padded_status = job.status.clone();
@@ -20,5 +24,6 @@ pub fn handle_jobs(jobs: &Vec<RunningJob>) -> Result<String, CommandError> {
         );
         println!("{}", string_thing);
     }
+    jobs.retain_mut(|job| job.status == "Running".to_string());
     Ok(String::new())
 }
