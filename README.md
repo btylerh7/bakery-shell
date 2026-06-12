@@ -77,8 +77,19 @@ to use as much of the standard library as possible.
 - [x] Unregister a completion
 
 ### Background Jobs
-- [ ] The jobs builtin
-- [ ] Starting background jobs
-- [ ] Printing background job output
+- [x] The jobs builtin
+- [x] Starting background jobs
+- [x] Printing background job output
+- [x] List a single job
+- [x] List multiple jobs
+- [x] Reap one job
+- [x] Reap multiple jobs
+- [x] Reap before the next prompt
+- [x] Recycle job numbers
+
+### Pipelines
+- [ ] Dual-command pipeline
+- [ ] Pipelines with builtins
+- [ ] Multi-command pipelines
 
 More to the course, but I will add the checklist later.

@@ -13,6 +13,7 @@ pub struct ShellCommand {
     executable_path: String,
     background: bool,
     is_builtin: bool,
+    is_piped: bool,
     std_out: Option<PathBuf>,
     std_err: Option<PathBuf>,
     append: bool,
@@ -24,6 +25,7 @@ impl ShellCommand {
             executable_path: String::new(),
             background: false,
             is_builtin: false,
+            is_piped: false,
             std_out: None,
             std_err: None,
             append: false,
@@ -75,6 +77,8 @@ impl REPL {
                         current_command.append = true;
                     }
                 }
+            } else if arg == "|" {
+                current_command.is_piped = true
             } else {
                 current_command.args.push(arg);
             }
@@ -110,7 +114,11 @@ impl REPL {
         rl: &mut rustyline::Editor<ShellHelper, FileHistory>,
     ) {
         let commands = self.determine_commands(args, paths);
-        for command in commands {
+        let mut previous_std_out: Vec<String> = vec![];
+        for mut command in commands {
+            if command.is_piped {
+                command.args.push(previous_std_out.join("").to_string());
+            }
             if command.is_builtin {
                 self.handle_builtin(&command, paths, rl);
             } else {
@@ -142,12 +150,13 @@ impl REPL {
             } else {
                 self.read_std_err();
             }
-            let completions = match rl.helper_mut() {
-                Some(helper) => helper,
-                None => &mut ShellHelper::new(),
-            };
-            let _ = handle_jobs(&mut completions.running_jobs, false);
+            previous_std_out = self.std_out.clone();
         }
+        let completions = match rl.helper_mut() {
+            Some(helper) => helper,
+            None => &mut ShellHelper::new(),
+        };
+        let _ = handle_jobs(&mut completions.running_jobs, false);
     }
     pub fn read_std_out(&mut self) {
         self.std_out = self
