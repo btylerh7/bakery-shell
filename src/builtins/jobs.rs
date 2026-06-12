@@ -16,7 +16,10 @@ pub fn handle_jobs(jobs: &mut Vec<RunningJob>) -> Result<String, CommandError> {
         let pad_length = 24 - job.status.len();
         let mut padded_status = job.status.clone();
         let number = job.job_number.clone();
-        let command_name = job.command_string.clone();
+        let mut command_name = job.command_string.clone();
+        if job.status == "Done".to_string() {
+            command_name = command_name.strip_suffix(" &").unwrap().to_string();
+        }
         padded_status.push_str(&" ".repeat(pad_length));
         let string_thing = format!(
             "[{}]{}  {}{}",
