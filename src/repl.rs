@@ -118,6 +118,7 @@ impl REPL {
         for mut command in commands {
             if command.is_piped {
                 command.args.push(previous_std_out.join("").to_string());
+                self.std_out = vec![];
             }
             if command.is_builtin {
                 self.handle_builtin(&command, paths, rl);
