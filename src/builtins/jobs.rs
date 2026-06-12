@@ -1,6 +1,6 @@
 use crate::shell::{CommandError, RunningJob};
 
-pub fn handle_jobs(jobs: &mut Vec<RunningJob>) -> Result<String, CommandError> {
+pub fn handle_jobs(jobs: &mut Vec<RunningJob>, show_running: bool) -> Result<String, CommandError> {
     let len = jobs.len();
     for (i, job) in jobs.iter_mut().enumerate() {
         let mut most_recent_symbol = "";
@@ -25,8 +25,14 @@ pub fn handle_jobs(jobs: &mut Vec<RunningJob>) -> Result<String, CommandError> {
             "[{}]{}  {}{}",
             number, most_recent_symbol, padded_status, command_name
         );
-        println!("{}", string_thing);
+        if job.status == "Done".to_string() {
+            println!("{}", string_thing);
+        } else if show_running == true {
+            println!("{}", string_thing);
+        }
     }
     jobs.retain_mut(|job| job.status == "Running".to_string());
     Ok(String::new())
 }
+
+pub fn check_completed_jobs(jobs: &mut Vec<RunningJob>) {}

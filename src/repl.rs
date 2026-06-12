@@ -1,5 +1,6 @@
 use rustyline::history::FileHistory;
 
+use crate::builtins::jobs::handle_jobs;
 use crate::builtins::run_builtin;
 use crate::shell::{CommandError, RunningJob, ShellBuiltin, ShellHelper};
 use std::io::{self, Write};
@@ -141,6 +142,11 @@ impl REPL {
             } else {
                 self.read_std_err();
             }
+            let completions = match rl.helper_mut() {
+                Some(helper) => helper,
+                None => &mut ShellHelper::new(),
+            };
+            let _ = handle_jobs(&mut completions.running_jobs, false);
         }
     }
     pub fn read_std_out(&mut self) {
